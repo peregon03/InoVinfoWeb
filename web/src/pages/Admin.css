@@ -1,0 +1,94 @@
+.admin-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  margin-bottom: var(--gap);
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-tab {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  text-decoration: none;
+  transition: all var(--transition);
+}
+
+.admin-tab.active {
+  background: var(--primary);
+  color: var(--text);
+}
+
+.admin-tab:hover {
+  color: var(--text);
+}
+
+.admin-content {
+  min-height: 200px;
+}
+
+.admin-section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: var(--gap);
+}
+
+/* Generic admin list */
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.admin-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px var(--gap);
+  gap: var(--gap-sm);
+}
+
+.admin-list-item .item-name {
+  font-weight: 600;
+  flex: 1;
+}
+
+.admin-list-item .item-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* Form modal */
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  margin-top: var(--gap);
+}
+
+.admin-form-actions {
+  display: flex;
+  gap: var(--gap-sm);
+}
+
+.admin-form-actions .btn {
+  flex: 1;
+}
+
+.admin-inline-form {
+  display: flex;
+  gap: var(--gap-sm);
+  margin-bottom: var(--gap);
+}
+
+.admin-inline-form input {
+  flex: 1;
+}
+
+.admin-inline-form .btn {
+  white-space: nowrap;
+}

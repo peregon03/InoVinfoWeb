@@ -1,0 +1,43 @@
+:root {
+  /* Fondos */
+  --bg: #0F1722;
+  --surface: #18222D;
+  --surface-border: #2A3644;
+  --surface-radius: 14px;
+  --header-gradient: linear-gradient(135deg, #1A3A5C, #0D1F33);
+
+  /* Colores */
+  --primary: #1A3A5C;
+  --primary-light: #254d75;
+  --accent: #D4A843;
+  --accent-hover: #e0b854;
+  --text: #F2F4F7;
+  --text-secondary: #9AA7B5;
+  --error: #E24B4A;
+  --success: #2E7D32;
+
+  /* Estados de visita */
+  --estado-ok: #2E7D32;
+  --estado-novedad: #F9A825;
+  --estado-inoperativa: #E24B4A;
+  --estado-sin-llaves: #757575;
+  --estado-no-en-base: #5C6BC0;
+  --estado-pendiente: #EF6C00;
+  --estado-bat-desc: #9E9E9E;
+
+  /* Tipografía */
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-size-base: 16px;
+
+  /* Spacing */
+  --gap: 16px;
+  --gap-sm: 8px;
+  --gap-xs: 4px;
+  --gap-lg: 24px;
+
+  /* Otros */
+  --btn-min-height: 48px;
+  --input-height: 48px;
+  --nav-height: 64px;
+  --transition: 0.2s ease;
+}

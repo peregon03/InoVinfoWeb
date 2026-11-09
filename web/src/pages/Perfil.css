@@ -1,0 +1,48 @@
+.perfil-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap-sm);
+  padding: var(--gap-lg);
+  text-align: center;
+}
+
+.perfil-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: var(--gap-sm);
+}
+
+.perfil-nombre {
+  font-size: 1.2rem;
+}
+
+.perfil-email {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.perfil-rol {
+  margin-top: var(--gap-xs);
+}
+
+.perfil-permisos {
+  margin-top: var(--gap);
+  width: 100%;
+}
+
+.perfil-permisos-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  margin-top: var(--gap-xs);
+  justify-content: center;
+}

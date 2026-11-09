@@ -1,0 +1,12 @@
+{
+  "name": "InovInfo",
+  "short_name": "InovInfo",
+  "description": "Registro de visitas técnicas — Electroinova",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F1722",
+  "theme_color": "#0F1722",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

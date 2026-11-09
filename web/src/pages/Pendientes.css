@@ -1,0 +1,58 @@
+.pend-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.pend-card {
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  transition: border-color var(--transition);
+}
+
+.pend-card:hover,
+.pend-card:active {
+  border-color: var(--accent);
+}
+
+.pend-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pend-unidad {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.pend-sede {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  display: block;
+  margin-top: 2px;
+}
+
+.pend-meta {
+  display: flex;
+  gap: var(--gap-sm);
+  margin-top: 6px;
+  font-size: 0.82rem;
+}
+
+.pend-fecha {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.pend-tecnico {
+  color: var(--text-secondary);
+}
+
+.pend-nota {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  line-height: 1.4;
+}
