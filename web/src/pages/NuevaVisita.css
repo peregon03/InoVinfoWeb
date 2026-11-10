@@ -217,3 +217,32 @@
   font-size: 0.82rem;
   min-height: 34px;
 }
+
+/* ── Responsive ─────────────────────────────────── */
+@media (max-width: 380px) {
+  .nv-counters {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .nv-counter-box {
+    padding: 8px 4px;
+  }
+  .nv-counter-num {
+    font-size: 1.2rem;
+  }
+  .nv-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .nv-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 8px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .nv-cards-grid {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  }
+}

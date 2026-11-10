@@ -255,8 +255,29 @@ select {
   flex-shrink: 0;
 }
 
+/* ── Responsive breakpoints ─────────────────────── */
 @media (min-width: 768px) {
   .page {
     max-width: 720px;
+    padding: var(--gap) var(--gap-lg);
+  }
+}
+
+@media (min-width: 1024px) {
+  .page {
+    max-width: 860px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .page {
+    max-width: 960px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 380px) {
+  .page-title {
+    font-size: 1.1rem;
   }
 }

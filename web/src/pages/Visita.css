@@ -11,7 +11,7 @@
   top: 0;
   background: var(--bg);
   padding: var(--gap) 0;
-  z-index: 10;
+  z-index: 15;
 }
 
 .visita-unidad-num {
@@ -279,12 +279,19 @@
 
 .sum-selector {
   margin-top: var(--gap-sm);
+  position: relative;
+  z-index: 20;
 }
 
 .sum-list {
   max-height: 200px;
   overflow-y: auto;
   margin-top: var(--gap-sm);
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  position: relative;
+  z-index: 20;
 }
 
 .sum-option {
@@ -336,6 +343,27 @@
 @media (min-width: 768px) {
   .visita-save-bar {
     left: 80px;
+  }
+  .visita-save-bar .btn {
+    max-width: 720px;
+  }
+  .estado-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .visita-save-bar .btn {
+    max-width: 860px;
+  }
+  .grabacion-fields {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+@media (min-width: 1280px) {
+  .visita-save-bar .btn {
+    max-width: 960px;
   }
 }
 
