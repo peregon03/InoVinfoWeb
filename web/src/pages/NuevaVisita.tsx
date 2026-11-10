@@ -29,9 +29,12 @@ function clasificar(u: UnidadEstado): FiltroKey {
 export default function NuevaVisita() {
   const navigate = useNavigate()
   const [sedes, setSedes] = useState<Sede[]>([])
-  const [sedeId, setSedeId] = useState<number | null>(() => {
-    const saved = localStorage.getItem('sede_id')
-    return saved ? Number(saved) : null
+  const [sedeIds, setSedeIds] = useState<Set<number>>(() => {
+    const saved = localStorage.getItem('sede_ids')
+    if (saved) {
+      try { return new Set(JSON.parse(saved) as number[]) } catch { /* ignore */ }
+    }
+    return new Set()
   })
   const [todasUnidades, setTodasUnidades] = useState<UnidadEstado[]>([])
   const [filtro, setFiltro] = useState<FiltroKey>('todas')
@@ -45,25 +48,34 @@ export default function NuevaVisita() {
     ]).then(([s, u]) => {
       setSedes(s.filter((x) => x.activa))
       setTodasUnidades(u)
-      if (!sedeId && s.length === 1) {
-        setSedeId(s[0].id)
-        localStorage.setItem('sede_id', String(s[0].id))
+      if (sedeIds.size === 0 && s.length === 1) {
+        const initial = new Set([s[0].id])
+        setSedeIds(initial)
+        localStorage.setItem('sede_ids', JSON.stringify([...initial]))
       }
     }).finally(() => setLoading(false))
   }, [])
 
-  function handleSedeChange(id: number) {
-    setSedeId(id)
-    localStorage.setItem('sede_id', String(id))
+  function toggleSede(id: number) {
+    setSedeIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      localStorage.setItem('sede_ids', JSON.stringify([...next]))
+      return next
+    })
     setFiltro('todas')
     setBusqueda('')
   }
 
-  // Units filtered by selected sede (sede = base operativa)
+  // Units filtered by selected sedes
   const unidadesPorSede = useMemo(() => {
-    if (!sedeId) return todasUnidades
-    return todasUnidades.filter((u) => u.sede_id === sedeId)
-  }, [todasUnidades, sedeId])
+    if (sedeIds.size === 0) return []
+    return todasUnidades.filter((u) => u.sede_id != null && sedeIds.has(u.sede_id))
+  }, [todasUnidades, sedeIds])
 
   // Counters based on the sede-filtered list
   const contadores = useMemo(() => {
@@ -108,7 +120,8 @@ export default function NuevaVisita() {
     return list
   }, [unidadesPorSede, filtro, busqueda])
 
-  const sedeNombre = sedes.find((s) => s.id === sedeId)?.nombre || ''
+  // Names of selected sedes for display
+  const sedeNombres = sedes.filter((s) => sedeIds.has(s.id)).map((s) => s.nombre).join(' · ')
 
   function toggleFiltro(key: FiltroKey) {
     setFiltro((prev) => (prev === key ? 'todas' : key))
@@ -122,24 +135,27 @@ export default function NuevaVisita() {
     <div className="page">
       <h1 className="page-title">Nueva Visita</h1>
 
-      {/* Sede / Base selector */}
+      {/* Sede / Base selector — multi-select */}
       <div className="card nv-base-card">
         <span className="card-title">Base operativa</span>
         <div className="nv-base-buttons">
           {sedes.map((s) => (
             <button
               key={s.id}
-              className={`btn ${sedeId === s.id ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => handleSedeChange(s.id)}
+              className={`btn ${sedeIds.has(s.id) ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => toggleSede(s.id)}
             >
               {s.nombre}
             </button>
           ))}
         </div>
+        {sedeIds.size > 1 && (
+          <p className="nv-base-selected">{sedeNombres}</p>
+        )}
       </div>
 
-      {/* Show counters and list only when a sede is selected */}
-      {sedeId ? (
+      {/* Show counters and list only when at least one sede is selected */}
+      {sedeIds.size > 0 ? (
         <>
           {/* Progress bar */}
           <div className="card nv-progress-card">
@@ -216,7 +232,7 @@ export default function NuevaVisita() {
                     </div>
                     <button
                       className="btn btn-primary nv-revisar-btn"
-                      onClick={() => navigate(`/visita/${u.unidad_id}`, { state: { unidad: { id: u.unidad_id, numero: u.numero, placa: u.placa, sede_id: u.sede_id, sede_nombre: u.sede_nombre, activa: true }, baseId: sedeId, baseNombre: sedeNombre } })}
+                      onClick={() => navigate(`/visita/${u.unidad_id}`, { state: { unidad: { id: u.unidad_id, numero: u.numero, placa: u.placa, sede_id: u.sede_id, sede_nombre: u.sede_nombre, activa: true }, baseId: u.sede_id, baseNombre: u.sede_nombre || '' } })}
                     >
                       Revisar
                     </button>
@@ -227,7 +243,7 @@ export default function NuevaVisita() {
           </div>
         </>
       ) : (
-        <div className="empty-state">Selecciona una base operativa para ver las unidades</div>
+        <div className="empty-state">Selecciona una o más bases operativas</div>
       )}
     </div>
   )

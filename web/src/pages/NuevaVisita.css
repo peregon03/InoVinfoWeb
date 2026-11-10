@@ -14,6 +14,13 @@
   font-size: 0.9rem;
 }
 
+.nv-base-selected {
+  font-size: 0.8rem;
+  color: var(--accent);
+  margin-top: 8px;
+  font-weight: 600;
+}
+
 /* ── Progress bar ────────────────────────────────── */
 .nv-progress-card {
   margin-bottom: var(--gap);
