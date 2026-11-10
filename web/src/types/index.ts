@@ -155,6 +155,8 @@ export interface UnidadEstado {
   color_hex: string | null
   ultima_fecha: string | null
   ultima_visita_id: number | null
+  ultima_base_id: number | null
+  ultima_base_nombre: string | null
   seguimientos_abiertos: number
 }
 

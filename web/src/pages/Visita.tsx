@@ -106,6 +106,11 @@ export default function Visita() {
   const [notaSeguimiento, setNotaSeguimiento] = useState('')
   const [fechaRecordatorio, setFechaRecordatorio] = useState('')
 
+  // IA redacción
+  const [iaLoading, setIaLoading] = useState(false)
+  const [iaResultado, setIaResultado] = useState('')
+  const [iaUsada, setIaUsada] = useState(false)
+
   // Vista previa de observación
   const [obsEditada, setObsEditada] = useState('')
   const [showObsPreview, setShowObsPreview] = useState(false)
@@ -250,6 +255,31 @@ export default function Visita() {
     setSeguimientoDecisiones((p) =>
       p.map((d) => d.id === id ? { ...d, comentario } : d)
     )
+  }
+
+  async function estructurarConIA() {
+    const desc = hallazgo.trim()
+    if (!desc) return
+    setIaLoading(true)
+    try {
+      const sumsTexto = suministros.map((s) => `${s.nombre}${s.cantidad > 1 ? ` x${s.cantidad}` : ''}`).join(', ')
+      const result = await api.post<{ observacion: string }>('/ia/redactar', {
+        unidad_numero: unidad?.numero || '',
+        estado: estadoNombre,
+        suministros: sumsTexto || 'Ninguno',
+        descripcion: desc,
+      })
+      setIaResultado(result.observacion)
+      setIaUsada(true)
+      // Auto-set as the editable observation
+      setObsEditada(result.observacion)
+      setShowObsPreview(true)
+    } catch (err) {
+      console.error('Error IA:', err)
+      setError('No se pudo estructurar con IA. Puedes continuar sin ella.')
+    } finally {
+      setIaLoading(false)
+    }
   }
 
   const observacionAuto = useMemo(() => {
@@ -621,13 +651,30 @@ export default function Visita() {
       {secciones.hallazgo && (
         <div className="card visita-section">
           <span className="card-title">Hallazgo</span>
-          <p className="visita-help">Qué se encontró. Se agrega después de "durante la inspección..."</p>
+          <p className="visita-help">Describe lo que encontraste. La IA lo redactará profesionalmente.</p>
           <textarea
             value={hallazgo}
-            onChange={(e) => setHallazgo(e.target.value)}
+            onChange={(e) => { setHallazgo(e.target.value); setIaUsada(false) }}
             placeholder="Ej: la pantalla presenta rayas de colores por daño en la board"
             rows={3}
           />
+          {hallazgo.trim() && (
+            <button
+              className="btn btn-ia"
+              onClick={estructurarConIA}
+              disabled={iaLoading}
+              style={{ marginTop: 8 }}
+            >
+              {iaLoading ? (
+                <><span className="spinner spinner-sm" /> Estructurando...</>
+              ) : (
+                <><span className="ia-sparkle">✦</span> Estructurar con IA</>
+              )}
+            </button>
+          )}
+          {iaUsada && iaResultado && (
+            <div className="ia-badge">Redactado por IA ✦</div>
+          )}
         </div>
       )}
 

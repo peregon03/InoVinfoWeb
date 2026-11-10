@@ -21,6 +21,7 @@ app.use('/api/importar',        require('./routes/importar'));
 app.use('/api/google',          require('./routes/google-drive'));
 app.use('/api/seguimientos',    require('./routes/seguimientos'));
 app.use('/api/unidades',        require('./routes/unidades'));
+app.use('/api/ia',              require('./routes/ia'));
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {

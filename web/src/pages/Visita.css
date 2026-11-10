@@ -450,3 +450,49 @@
   flex-direction: column;
   gap: var(--gap-sm);
 }
+
+/* ── v2: IA button ───────────────────────────────── */
+.btn-ia {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, rgba(106, 90, 205, 0.15), rgba(212, 168, 67, 0.15));
+  border: 1px solid rgba(106, 90, 205, 0.4);
+  color: #B8A9E8;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 10px 16px;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.btn-ia:hover,
+.btn-ia:active {
+  border-color: #B8A9E8;
+  background: linear-gradient(135deg, rgba(106, 90, 205, 0.25), rgba(212, 168, 67, 0.25));
+}
+
+.btn-ia:disabled {
+  opacity: 0.7;
+}
+
+.ia-sparkle {
+  font-size: 1.1rem;
+}
+
+.spinner-sm {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+.ia-badge {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: #B8A9E8;
+  background: rgba(106, 90, 205, 0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+}

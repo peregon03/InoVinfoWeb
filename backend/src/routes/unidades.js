@@ -17,7 +17,8 @@ router.get('/estado', async (req, res) => {
                     v.id AS visita_id,
                     ev.nombre AS estado,
                     ev.color_hex,
-                    v.created_at AS fecha
+                    v.created_at AS fecha,
+                    v.base_id
                 FROM visitas v
                 JOIN estados_visita ev ON v.estado_id = ev.id
                 WHERE v.created_at >= NOW() - ($1 || ' days')::interval
@@ -35,10 +36,13 @@ router.get('/estado', async (req, res) => {
                    uv.color_hex,
                    uv.fecha AS ultima_fecha,
                    uv.visita_id AS ultima_visita_id,
+                   uv.base_id AS ultima_base_id,
+                   b.nombre AS ultima_base_nombre,
                    COALESCE(sa.cnt, 0)::int AS seguimientos_abiertos
             FROM unidades u
             LEFT JOIN sedes s ON u.sede_id = s.id
             LEFT JOIN ultima_visita uv ON u.id = uv.unidad_id
+            LEFT JOIN bases b ON uv.base_id = b.id
             LEFT JOIN seg_abiertos sa ON u.id = sa.unidad_id
             WHERE u.activa = true
             ORDER BY u.numero

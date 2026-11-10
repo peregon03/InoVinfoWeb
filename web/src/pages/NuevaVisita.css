@@ -14,6 +14,29 @@
   font-size: 0.9rem;
 }
 
+/* ── Progress bar ────────────────────────────────── */
+.nv-progress-card {
+  margin-bottom: var(--gap);
+}
+
+.nv-progress-info {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-sm);
+  margin-bottom: var(--gap-sm);
+}
+
+.nv-progress-numbers {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.nv-progress-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
 /* ── Counters grid: 4×2 ─────────────────────────── */
 .nv-counters {
   display: grid;
