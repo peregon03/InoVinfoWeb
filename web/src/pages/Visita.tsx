@@ -3,7 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { api, ApiError } from '../lib/api'
 import { construirObservacion, generarHallazgoAutomatico } from '../lib/observacion'
 import { procesarFoto, MAX_FOTOS_TOTAL } from '../lib/fotos'
-import type { Unidad, Sede, EstadoVisita, Suministro, Checklist, Visita } from '../types'
+import type { Unidad, Sede, EstadoVisita, Suministro, Checklist, Visita as VisitaType, Seguimiento, SuministroReciente } from '../types'
 import './Visita.css'
 
 // Qué secciones se muestran por estado
@@ -38,6 +38,13 @@ interface SuministroSel {
   suministro_id: number
   nombre: string
   cantidad: number
+  cambioReciente?: boolean
+}
+
+interface SeguimientoDecision {
+  id: number
+  solucionado: boolean | null
+  comentario: string
 }
 
 export default function Visita() {
@@ -51,6 +58,12 @@ export default function Visita() {
   const [estados, setEstados] = useState<EstadoVisita[]>([])
   const [suministrosCat, setSuministrosCat] = useState<Suministro[]>([])
   const [loading, setLoading] = useState(true)
+
+  // v2: Seguimientos abiertos y suministros recientes
+  const [seguimientosAbiertos, setSeguimientosAbiertos] = useState<Seguimiento[]>([])
+  const [seguimientoDecisiones, setSeguimientoDecisiones] = useState<SeguimientoDecision[]>([])
+  const [suministrosRecientes, setSuministrosRecientes] = useState<SuministroReciente[]>([])
+  const [alertaSuministro, setAlertaSuministro] = useState<{ reciente: SuministroReciente; suministro: Suministro } | null>(null)
 
   // Estado del formulario
   const [estadoId, setEstadoId] = useState<number | null>(null)
@@ -88,9 +101,10 @@ export default function Visita() {
   // Opciones adicionales
   const [esExtraordinaria, setEsExtraordinaria] = useState(false)
   const [esOtraSede, setEsOtraSede] = useState(false)
-  const [requiereSeguimiento, setRequiereSeguimiento] = useState(false)
-  const [fechaSeguimiento, setFechaSeguimiento] = useState('')
+  // v2: seguimiento creation
+  const [hacerSeguimiento, setHacerSeguimiento] = useState(false)
   const [notaSeguimiento, setNotaSeguimiento] = useState('')
+  const [fechaRecordatorio, setFechaRecordatorio] = useState('')
 
   // Vista previa de observación
   const [obsEditada, setObsEditada] = useState('')
@@ -113,11 +127,14 @@ export default function Visita() {
       api.get<EstadoVisita[]>('/catalogos/estados'),
       api.get<Suministro[]>('/catalogos/suministros'),
       !unidad ? api.get<Unidad[]>('/catalogos/unidades') : Promise.resolve(null),
-      api.get<Visita[]>('/visitas', { unidad_id: String(uid) }),
-    ]).then(([s, e, sum, uArr, visitas]) => {
+      api.get<VisitaType[]>('/visitas', { unidad_id: String(uid) }),
+      // v2: load open seguimientos
+      api.get<Seguimiento[]>('/seguimientos', { unidad_id: String(uid), estado: 'abierto' }),
+      // v2: load recent supplies (non-blocking)
+      api.get<SuministroReciente[]>(`/unidades/${uid}/suministros-recientes`, { meses: '6' }).catch(() => [] as SuministroReciente[]),
+    ]).then(([s, e, sum, uArr, visitas, segs, sumRec]) => {
       setSedes(s.filter((x) => x.activa))
 
-      // Solo los 6 estados web, en el orden definido
       const webStates = ['OK', 'Con novedad', 'Inoperativa', 'Sin llaves', 'No está en la base', 'Pendiente']
       const ordered = webStates.map((name) => e.find((x) => x.nombre === name)).filter(Boolean) as EstadoVisita[]
       setEstados(ordered)
@@ -132,7 +149,7 @@ export default function Visita() {
         setSedeId(unidad.sede_id)
       }
 
-      // Pre-carga únicamente los valores "no_tiene" de la última visita
+      // Pre-carga no_tiene de la última visita
       if (visitas && visitas.length > 0) {
         const last = visitas[0]
         if (last.checklist) {
@@ -154,6 +171,13 @@ export default function Visita() {
           })
         }
       }
+
+      // v2: seguimientos
+      setSeguimientosAbiertos(segs)
+      setSeguimientoDecisiones(segs.map((seg) => ({ id: seg.id, solucionado: null, comentario: '' })))
+
+      // v2: suministros recientes
+      setSuministrosRecientes(sumRec)
     }).finally(() => setLoading(false))
   }, [unidadId])
 
@@ -163,8 +187,9 @@ export default function Visita() {
   function handleEstado(e: EstadoVisita) {
     setEstadoId(e.id)
     setEstadoNombre(e.nombre)
+    // v2: Pendiente auto-enables seguimiento
     if (e.nombre === 'Pendiente') {
-      setRequiereSeguimiento(true)
+      setHacerSeguimiento(true)
     }
   }
 
@@ -187,11 +212,22 @@ export default function Visita() {
     else setFotosDespues((p) => p.filter((f) => f.id !== id))
   }
 
-  function addSuministro(s: Suministro) {
+  // v2: Check for recent supply before adding
+  function tryAddSuministro(s: Suministro) {
+    const reciente = suministrosRecientes.find((r) => r.suministro_id === s.id)
+    if (reciente) {
+      setAlertaSuministro({ reciente, suministro: s })
+    } else {
+      confirmAddSuministro(s, false)
+    }
+  }
+
+  function confirmAddSuministro(s: Suministro, marcado: boolean) {
     if (suministros.find((x) => x.suministro_id === s.id)) return
-    setSuministros((p) => [...p, { suministro_id: s.id, nombre: s.nombre, cantidad: 1 }])
+    setSuministros((p) => [...p, { suministro_id: s.id, nombre: s.nombre, cantidad: 1, cambioReciente: marcado }])
     setShowSumSelector(false)
     setSumBusqueda('')
+    setAlertaSuministro(null)
   }
 
   function updateSumCant(id: number, delta: number) {
@@ -204,7 +240,18 @@ export default function Visita() {
     setSuministros((p) => p.filter((s) => s.suministro_id !== id))
   }
 
-  // Construye la observación automática en base a los valores del formulario
+  function updateSeguimientoDecision(id: number, solucionado: boolean) {
+    setSeguimientoDecisiones((p) =>
+      p.map((d) => d.id === id ? { ...d, solucionado } : d)
+    )
+  }
+
+  function updateSeguimientoComentario(id: number, comentario: string) {
+    setSeguimientoDecisiones((p) =>
+      p.map((d) => d.id === id ? { ...d, comentario } : d)
+    )
+  }
+
   const observacionAuto = useMemo(() => {
     if (!estadoNombre) return ''
     let h = hallazgo.trim()
@@ -226,7 +273,15 @@ export default function Visita() {
       const hasFalla = Object.values(camaras).includes('falla') || Object.values(equipos).includes('falla')
       if (!hallazgo.trim() && !hasFalla) return 'Con novedad requiere un hallazgo o al menos un ítem en falla'
     }
-    if (estadoNombre === 'Pendiente' && !fechaSeguimiento) return 'Pendiente requiere fecha de seguimiento'
+    // v2: seguimiento mandatory decisions
+    if (seguimientosAbiertos.length > 0) {
+      const pendingDecision = seguimientoDecisiones.find((d) => d.solucionado === null)
+      if (pendingDecision) return 'Debes indicar Solucionado o Sigue pendiente en cada seguimiento'
+    }
+    // v2: nota obligatoria when creating seguimiento
+    if ((hacerSeguimiento || estadoNombre === 'Pendiente') && !notaSeguimiento.trim()) {
+      return 'La nota para el equipo es obligatoria para el seguimiento'
+    }
     return null
   }
 
@@ -239,7 +294,6 @@ export default function Visita() {
     setFotoProgress(null)
 
     try {
-      // Usa la observación editada si el técnico abrió el preview
       const obs = showObsPreview ? obsEditada : observacionAuto
 
       const checklist: Checklist | null = secciones.checklist ? { camaras, equipos } : null
@@ -256,9 +310,10 @@ export default function Visita() {
         base_id: baseId,
         es_extraordinaria: esExtraordinaria,
         es_otra_sede: esOtraSede,
-        requiere_seguimiento: requiereSeguimiento || estadoNombre === 'Pendiente',
-        fecha_seguimiento: (requiereSeguimiento || estadoNombre === 'Pendiente') ? fechaSeguimiento || null : null,
-        nota_seguimiento: (requiereSeguimiento || estadoNombre === 'Pendiente') ? notaSeguimiento || null : null,
+        // v2: legacy fields still sent for Android compat
+        requiere_seguimiento: false,
+        fecha_seguimiento: null,
+        nota_seguimiento: null,
         suministros: secciones.suministros
           ? suministros.map((s) => ({ suministro_id: s.suministro_id, cantidad: s.cantidad }))
           : [],
@@ -271,6 +326,25 @@ export default function Visita() {
       }
 
       if (checklist) body.checklist = checklist
+
+      // v2: seguimiento creation
+      if (hacerSeguimiento || estadoNombre === 'Pendiente') {
+        body.seguimiento = {
+          nota: notaSeguimiento.trim(),
+          fecha_recordatorio: fechaRecordatorio || null,
+        }
+      }
+
+      // v2: seguimientos reviewed
+      if (seguimientoDecisiones.length > 0) {
+        body.seguimientos_revisados = seguimientoDecisiones
+          .filter((d) => d.solucionado !== null)
+          .map((d) => ({
+            id: d.id,
+            solucionado: d.solucionado,
+            comentario: d.comentario || null,
+          }))
+      }
 
       const visita = await api.post<{ id: number }>('/visitas', body)
 
@@ -345,7 +419,7 @@ export default function Visita() {
 
   return (
     <div className="page visita-page">
-      {/* Encabezado con número de unidad y sede */}
+      {/* Encabezado */}
       <div className="visita-header">
         <button className="back-btn" onClick={() => navigate(-1)}>←</button>
         <div>
@@ -358,6 +432,47 @@ export default function Visita() {
       </div>
 
       {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
+
+      {/* v2: SEGUIMIENTOS PENDIENTES (before other sections) */}
+      {seguimientosAbiertos.length > 0 && (
+        <div className="seg-section">
+          {seguimientosAbiertos.map((seg, idx) => {
+            const decision = seguimientoDecisiones[idx]
+            return (
+              <div key={seg.id} className="card seg-card">
+                <div className="seg-header">SEGUIMIENTO PENDIENTE</div>
+                <p className="seg-nota">{seg.nota}</p>
+                <div className="seg-meta">
+                  <span>{seg.creado_por_nombre || 'Sin autor'}</span>
+                  <span>{new Date(seg.created_at).toLocaleDateString('es-CO', { timeZone: 'America/Bogota', day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                  {seg.fecha_recordatorio && <span>Recordar: {new Date(seg.fecha_recordatorio + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}</span>}
+                </div>
+                <div className="seg-actions">
+                  <button
+                    className={`btn ${decision?.solucionado === true ? 'btn-success' : 'btn-outline'}`}
+                    onClick={() => updateSeguimientoDecision(seg.id, true)}
+                  >
+                    Solucionado
+                  </button>
+                  <button
+                    className={`btn ${decision?.solucionado === false ? 'btn-warning' : 'btn-outline'}`}
+                    onClick={() => updateSeguimientoDecision(seg.id, false)}
+                  >
+                    Sigue pendiente
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Comentario (opcional)"
+                  value={decision?.comentario || ''}
+                  onChange={(e) => updateSeguimientoComentario(seg.id, e.target.value)}
+                  className="seg-comment"
+                />
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* 1. ESTADO */}
       <div className="card visita-section">
@@ -456,8 +571,6 @@ export default function Visita() {
       {secciones.checklist && (
         <div className="card visita-section">
           <span className="card-title">Cámaras y equipos</span>
-
-          {/* Acordeón de cámaras */}
           <div className={`checklist-group ${hasCamaraFalla ? 'has-falla' : ''}`}>
             <button className="checklist-accordion" onClick={() => setCamarasOpen(!camarasOpen)}>
               <span>Cámaras</span>
@@ -485,8 +598,6 @@ export default function Visita() {
               </div>
             )}
           </div>
-
-          {/* Filas de equipos */}
           {EQUIPOS.map((eq) => (
             <div key={eq.key} className="checklist-row">
               <span className="checklist-label">{eq.label}</span>
@@ -526,7 +637,10 @@ export default function Visita() {
           <span className="card-title">Suministros y cambios</span>
           {suministros.map((s) => (
             <div key={s.suministro_id} className="sum-row">
-              <span className="sum-nombre">{s.nombre}</span>
+              <div className="sum-nombre-wrap">
+                <span className="sum-nombre">{s.nombre}</span>
+                {s.cambioReciente && <span className="chip chip-cambio-reciente">Cambio reciente</span>}
+              </div>
               <div className="sum-stepper">
                 <button onClick={() => updateSumCant(s.suministro_id, -1)}>−</button>
                 <span>{s.cantidad}</span>
@@ -550,7 +664,7 @@ export default function Visita() {
                   .filter((s) => !sumBusqueda || s.nombre.toLowerCase().includes(sumBusqueda.toLowerCase()))
                   .slice(0, 10)
                   .map((s) => (
-                    <button key={s.id} className="sum-option" onClick={() => addSuministro(s)}>
+                    <button key={s.id} className="sum-option" onClick={() => tryAddSuministro(s)}>
                       {s.nombre}
                     </button>
                   ))}
@@ -568,6 +682,27 @@ export default function Visita() {
               + Agregar suministro
             </button>
           )}
+        </div>
+      )}
+
+      {/* v2: Alerta de suministro reciente */}
+      {alertaSuministro && (
+        <div className="modal-overlay" onClick={() => setAlertaSuministro(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <p className="alert-sum-text">
+              Este suministro ya se cambió en la unidad {unidad?.numero || unidadId} el{' '}
+              {new Date(alertaSuministro.reciente.fecha).toLocaleDateString('es-CO', { timeZone: 'America/Bogota', day: '2-digit', month: '2-digit', year: 'numeric' })}
+              {' '}(por {alertaSuministro.reciente.tecnico_nombre}, cantidad {alertaSuministro.reciente.cantidad}).
+            </p>
+            <div className="alert-sum-actions">
+              <button className="btn btn-warning" onClick={() => confirmAddSuministro(alertaSuministro.suministro, true)}>
+                Agregar de todas formas
+              </button>
+              <button className="btn btn-outline" onClick={() => setAlertaSuministro(null)}>
+                Cancelar
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -611,34 +746,35 @@ export default function Visita() {
             <span>Es de otra sede: agregar "(Unidad revisada en base operativa {baseNombre || '...'})"</span>
           </label>
 
+          {/* v2: Hacer seguimiento */}
           {estadoNombre !== 'Pendiente' && (
             <label className="check-label" style={{ marginTop: 8 }}>
-              <input type="checkbox" checked={requiereSeguimiento} onChange={(e) => setRequiereSeguimiento(e.target.checked)} />
-              <span>Requiere seguimiento</span>
+              <input type="checkbox" checked={hacerSeguimiento} onChange={(e) => setHacerSeguimiento(e.target.checked)} />
+              <span>Hacer seguimiento</span>
             </label>
           )}
 
-          {(requiereSeguimiento || estadoNombre === 'Pendiente') && (
+          {(hacerSeguimiento || estadoNombre === 'Pendiente') && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
               <div className="form-group">
-                <label>Fecha de seguimiento</label>
-                <input type="date" value={fechaSeguimiento} onChange={(e) => setFechaSeguimiento(e.target.value)} />
-              </div>
-              <div className="form-group">
-                <label>Nota de seguimiento</label>
+                <label>Nota para el equipo *</label>
                 <textarea
                   value={notaSeguimiento}
                   onChange={(e) => setNotaSeguimiento(e.target.value)}
                   rows={2}
-                  placeholder="Nota..."
+                  placeholder="Nota interna para el equipo..."
                 />
+              </div>
+              <div className="form-group">
+                <label>Recordar para (opcional)</label>
+                <input type="date" value={fechaRecordatorio} onChange={(e) => setFechaRecordatorio(e.target.value)} />
               </div>
             </div>
           )}
         </div>
       )}
 
-      {/* OBSERVACION — vista previa y edición opcional */}
+      {/* OBSERVACION */}
       {estadoNombre && estadoNombre !== 'Pendiente' && (
         <div className="card visita-section">
           <span className="card-title">Observación (vista previa)</span>

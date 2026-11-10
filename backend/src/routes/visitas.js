@@ -85,6 +85,19 @@ router.get('/', async (req, res) => {
             );
             row.fotos_detalle = fotosRes.rows;
             row.fotos_count = fotosRes.rows.length;
+
+            // v2: seguimiento info per visit
+            const segCreado = await pool.query(
+                'SELECT id, nota FROM seguimientos WHERE visita_origen_id = $1',
+                [row.id]
+            );
+            row.seguimiento_creado = segCreado.rows.length > 0 ? segCreado.rows[0] : null;
+
+            const segResuelto = await pool.query(
+                'SELECT id, nota, comentario_resolucion FROM seguimientos WHERE visita_resolucion_id = $1',
+                [row.id]
+            );
+            row.seguimiento_resuelto = segResuelto.rows.length > 0 ? segResuelto.rows[0] : null;
         }
 
         res.json(result.rows);
@@ -125,27 +138,27 @@ router.get('/hoy', async (req, res) => {
 });
 
 // GET /api/visitas/pendientes
+// v2: reads from seguimientos table but keeps the same response shape for Android compatibility
 router.get('/pendientes', async (req, res) => {
     try {
-        // MODIFIED: COALESCE for sede, LEFT JOINs
         const query = `
-            SELECT v.id, un.id AS unidad_id, un.numero AS unidad_numero,
-                   COALESCE(sv.nombre, su.nombre) AS sede_nombre,
-                   v.fecha_seguimiento, v.nota_seguimiento,
+            SELECT s.id, s.unidad_id, un.numero AS unidad_numero,
+                   COALESCE(su.nombre) AS sede_nombre,
+                   COALESCE(s.fecha_recordatorio, s.created_at::date) AS fecha_seguimiento,
+                   s.nota AS nota_seguimiento,
                    u2.nombre AS tecnico_nombre,
                    CASE
-                       WHEN v.fecha_seguimiento < (NOW() AT TIME ZONE 'America/Bogota')::date THEN 'vencido'
-                       WHEN v.fecha_seguimiento = (NOW() AT TIME ZONE 'America/Bogota')::date THEN 'hoy'
+                       WHEN s.fecha_recordatorio IS NULL THEN 'futuro'
+                       WHEN s.fecha_recordatorio < (NOW() AT TIME ZONE 'America/Bogota')::date THEN 'vencido'
+                       WHEN s.fecha_recordatorio = (NOW() AT TIME ZONE 'America/Bogota')::date THEN 'hoy'
                        ELSE 'futuro'
                    END AS urgencia
-            FROM visitas v
-            JOIN unidades un   ON v.unidad_id  = un.id
-            LEFT JOIN sedes sv ON v.sede_id    = sv.id
-            LEFT JOIN sedes su ON un.sede_id   = su.id
-            JOIN usuarios u2   ON v.tecnico_id = u2.id
-            WHERE v.requiere_seguimiento = TRUE
-              AND v.fecha_seguimiento IS NOT NULL
-            ORDER BY v.fecha_seguimiento ASC
+            FROM seguimientos s
+            JOIN unidades un   ON s.unidad_id = un.id
+            LEFT JOIN sedes su ON un.sede_id  = su.id
+            LEFT JOIN usuarios u2 ON s.creado_por = u2.id
+            WHERE s.estado = 'abierto'
+            ORDER BY COALESCE(s.fecha_recordatorio, '9999-12-31'::date) ASC, s.created_at ASC
         `;
 
         const result = await pool.query(query, []);
@@ -188,7 +201,9 @@ router.post('/', async (req, res) => {
         suministros,
         // NEW optional fields
         sede_id, base_id, atraso_hora_min, dias_grabacion,
-        h264_plus, checklist, es_extraordinaria, es_otra_sede
+        h264_plus, checklist, es_extraordinaria, es_otra_sede,
+        // v2: seguimientos
+        seguimiento, seguimientos_revisados
     } = req.body;
 
     if (!unidad_id || !estado_id) {
@@ -229,6 +244,50 @@ router.post('/', async (req, res) => {
                     'INSERT INTO visita_suministros (visita_id, suministro_id, cantidad) VALUES ($1,$2,$3)',
                     [visita.id, s.suministro_id, s.cantidad || 1]
                 );
+            }
+        }
+
+        // v2: Create seguimiento if provided (web path)
+        if (seguimiento && seguimiento.nota) {
+            await client.query(`
+                INSERT INTO seguimientos (unidad_id, visita_origen_id, nota, fecha_recordatorio, creado_por, created_at)
+                VALUES ($1, $2, $3, $4, $5, NOW())
+            `, [unidad_id, visita.id, seguimiento.nota, seguimiento.fecha_recordatorio || null, req.usuario.id]);
+        }
+        // v2: Android legacy path — if requiere_seguimiento came from Android, also create a seguimiento row
+        else if (requiere_seguimiento && nota_seguimiento && !seguimiento) {
+            await client.query(`
+                INSERT INTO seguimientos (unidad_id, visita_origen_id, nota, fecha_recordatorio, creado_por, created_at)
+                VALUES ($1, $2, $3, $4, $5, NOW())
+                ON CONFLICT DO NOTHING
+            `, [unidad_id, visita.id, nota_seguimiento, fecha_seguimiento || null, req.usuario.id]);
+        }
+
+        // v2: Process reviewed seguimientos
+        if (seguimientos_revisados && seguimientos_revisados.length > 0) {
+            for (const sr of seguimientos_revisados) {
+                // Validate: seguimiento must belong to this unit and be open
+                const check = await client.query(
+                    'SELECT id FROM seguimientos WHERE id = $1 AND unidad_id = $2 AND estado = $3',
+                    [sr.id, unidad_id, 'abierto']
+                );
+                if (check.rows.length === 0) continue;
+
+                if (sr.solucionado) {
+                    // Close the seguimiento
+                    await client.query(`
+                        UPDATE seguimientos
+                        SET estado = 'resuelto', resuelto_por = $1, resuelto_at = NOW(),
+                            visita_resolucion_id = $2, comentario_resolucion = $3
+                        WHERE id = $4
+                    `, [req.usuario.id, visita.id, sr.comentario || null, sr.id]);
+                } else {
+                    // "Sigue pendiente" — log a revision
+                    await client.query(`
+                        INSERT INTO seguimiento_revisiones (seguimiento_id, visita_id, comentario, created_at)
+                        VALUES ($1, $2, $3, NOW())
+                    `, [sr.id, visita.id, sr.comentario || null]);
+                }
             }
         }
 

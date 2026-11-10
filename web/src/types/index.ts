@@ -102,6 +102,8 @@ export interface Visita {
   suministros: VisitaSuministro[]
   fotos: string[]
   fotos_detalle?: FotoDetalle[]
+  seguimiento_creado?: { id: number; nota: string } | null
+  seguimiento_resuelto?: { id: number; nota: string; comentario_resolucion: string | null } | null
   created_at: string
 }
 
@@ -140,4 +142,40 @@ export interface DriveEstado {
   email: string | null
   carpetaUrl: string | null
   error: string | null
+}
+
+// v2: Unit status for counters
+export interface UnidadEstado {
+  unidad_id: number
+  numero: string
+  placa: string | null
+  sede_id: number | null
+  sede_nombre: string | null
+  ultimo_estado: string | null
+  color_hex: string | null
+  ultima_fecha: string | null
+  ultima_visita_id: number | null
+  seguimientos_abiertos: number
+}
+
+// v2: Seguimiento (follow-up note)
+export interface Seguimiento {
+  id: number
+  unidad_id: number
+  nota: string
+  fecha_recordatorio: string | null
+  creado_por_nombre: string | null
+  created_at: string
+  estado: 'abierto' | 'resuelto'
+  ultima_revision: { comentario: string | null; created_at: string } | null
+}
+
+// v2: Recent supply change alert
+export interface SuministroReciente {
+  suministro_id: number
+  nombre: string
+  cantidad: number
+  fecha: string
+  visita_id: number
+  tecnico_nombre: string
 }

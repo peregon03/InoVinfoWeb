@@ -199,7 +199,24 @@ export default function Historial() {
                     </div>
                   )}
 
-                  {v.requiere_seguimiento && (
+                  {/* v2: seguimiento info */}
+                  {v.seguimiento_creado && (
+                    <div className="hist-seguimiento hist-seg-creado">
+                      <span className="hist-label">Seguimiento creado:</span>
+                      <p>{v.seguimiento_creado.nota}</p>
+                    </div>
+                  )}
+                  {v.seguimiento_resuelto && (
+                    <div className="hist-seguimiento hist-seg-resuelto">
+                      <span className="hist-label">Seguimiento resuelto:</span>
+                      <p>{v.seguimiento_resuelto.nota}</p>
+                      {v.seguimiento_resuelto.comentario_resolucion && (
+                        <p className="hist-seg-comment">Comentario: {v.seguimiento_resuelto.comentario_resolucion}</p>
+                      )}
+                    </div>
+                  )}
+                  {/* Legacy: show old seguimiento fields if no new data */}
+                  {!v.seguimiento_creado && !v.seguimiento_resuelto && v.requiere_seguimiento && (
                     <div className="hist-seguimiento">
                       <span className="hist-label">Seguimiento: {v.fecha_seguimiento}</span>
                       {v.nota_seguimiento && <p>{v.nota_seguimiento}</p>}

@@ -14,43 +14,47 @@
   font-size: 0.9rem;
 }
 
-.nv-progress-card {
+/* ── Counters grid: 4×2 ─────────────────────────── */
+.nv-counters {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
   margin-bottom: var(--gap);
 }
 
-.nv-progress-info {
+.nv-counter-box {
+  background: #18222D;
+  border: 1px solid #2A3644;
+  border-radius: 10px;
+  padding: 10px 6px;
   display: flex;
-  align-items: baseline;
-  gap: var(--gap-sm);
-  margin-bottom: var(--gap-sm);
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: border-color 0.2s;
 }
 
-.nv-progress-numbers {
+.nv-counter-box.active {
+  border-color: #D4A843;
+  border-width: 2px;
+}
+
+.nv-counter-num {
   font-size: 1.4rem;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--text);
+  line-height: 1.2;
 }
 
-.nv-progress-label {
-  font-size: 0.8rem;
+.nv-counter-label {
+  font-size: 0.65rem;
   color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: 2px;
 }
 
-.nv-progress-bar {
-  height: 8px;
-  background: var(--bg);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.nv-progress-fill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 4px;
-  transition: width 0.5s ease;
-  min-width: 2px;
-}
-
+/* ── Search ──────────────────────────────────────── */
 .nv-search-wrapper {
   position: relative;
   margin-bottom: var(--gap);
@@ -75,33 +79,31 @@
   font-size: 1rem;
 }
 
-.nv-results {
+/* ── Unit list ───────────────────────────────────── */
+.nv-unit-list {
   display: flex;
   flex-direction: column;
   gap: var(--gap-sm);
 }
 
-.nv-unidad-row {
+.nv-unit-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px var(--gap);
-  cursor: pointer;
-  text-align: left;
-  width: 100%;
+  border-left: 3px solid transparent;
   transition: border-color var(--transition);
 }
 
-.nv-unidad-row:hover,
-.nv-unidad-row:active {
-  border-color: var(--accent);
+.nv-unit-row.sin-revisar {
+  border-left-color: #D4A843;
 }
 
-.nv-unidad-info {
+.nv-unit-left {
   display: flex;
-  align-items: center;
-  gap: var(--gap-sm);
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .nv-unidad-numero {
@@ -109,33 +111,55 @@
   font-size: 1.1rem;
 }
 
-.nv-unidad-placa {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  background: var(--bg);
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
 .nv-unidad-sede {
   font-size: 0.8rem;
   color: var(--text-secondary);
 }
 
-.nv-hoy {
-  margin-top: var(--gap);
-}
-
-.nv-hoy-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-sm);
-  margin-top: var(--gap-sm);
-}
-
-.nv-hoy-item {
+.nv-unit-status-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px var(--gap);
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.chip-sin-revisar {
+  background: rgba(212, 168, 67, 0.15);
+  color: #D4A843;
+}
+
+.nv-seg-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(226, 75, 74, 0.2);
+  color: var(--error);
+  font-size: 0.7rem;
+  font-weight: 700;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.nv-revisar-btn {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  min-height: 36px;
+}
+
+/* ── Progress bar (reused in Visita) ─────────────── */
+.nv-progress-bar {
+  height: 8px;
+  background: var(--bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.nv-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  min-width: 2px;
 }

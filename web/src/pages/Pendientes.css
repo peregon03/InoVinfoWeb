@@ -56,3 +56,8 @@
   margin-top: 6px;
   line-height: 1.4;
 }
+
+.pend-age {
+  color: var(--text-secondary);
+  font-style: italic;
+}

@@ -1,8 +1,32 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
-import type { Unidad, Base, VisitaHoy, Progreso } from '../types'
+import type { Base, UnidadEstado } from '../types'
 import './NuevaVisita.css'
+
+const FILTROS = [
+  { key: 'todas', label: 'Todas' },
+  { key: 'faltan', label: 'Faltan' },
+  { key: 'ok', label: 'OK' },
+  { key: 'novedad', label: 'Novedad' },
+  { key: 'inoperativa', label: 'Inoperat.' },
+  { key: 'sin_llaves', label: 'Sin llaves' },
+  { key: 'otras', label: 'Otras' },
+  { key: 'alertas', label: 'Alertas' },
+] as const
+
+type FiltroKey = typeof FILTROS[number]['key']
+
+const ESTADOS_PRINCIPALES = ['OK', 'Con novedad', 'Inoperativa', 'Sin llaves']
+
+function clasificar(u: UnidadEstado): FiltroKey {
+  if (!u.ultimo_estado) return 'faltan'
+  if (u.ultimo_estado === 'OK') return 'ok'
+  if (u.ultimo_estado === 'Con novedad') return 'novedad'
+  if (u.ultimo_estado === 'Inoperativa') return 'inoperativa'
+  if (u.ultimo_estado === 'Sin llaves') return 'sin_llaves'
+  return 'otras'
+}
 
 export default function NuevaVisita() {
   const navigate = useNavigate()
@@ -11,24 +35,18 @@ export default function NuevaVisita() {
     const saved = localStorage.getItem('base_id')
     return saved ? Number(saved) : null
   })
-  const [unidades, setUnidades] = useState<Unidad[]>([])
-  const [visitasHoy, setVisitasHoy] = useState<VisitaHoy[]>([])
-  const [progreso, setProgreso] = useState<Progreso | null>(null)
+  const [unidades, setUnidades] = useState<UnidadEstado[]>([])
+  const [filtro, setFiltro] = useState<FiltroKey>('todas')
   const [busqueda, setBusqueda] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     Promise.all([
       api.get<Base[]>('/catalogos/bases'),
-      api.get<Unidad[]>('/catalogos/unidades'),
-      api.get<VisitaHoy[]>('/visitas/hoy'),
-      api.get<Progreso>('/visitas/progreso', { dias: '15' }),
-    ]).then(([b, u, v, p]) => {
+      api.get<UnidadEstado[]>('/unidades/estado', { dias: '15' }),
+    ]).then(([b, u]) => {
       setBases(b)
-      setUnidades(u.filter((x) => x.activa))
-      setVisitasHoy(v)
-      setProgreso(p)
-      // Auto-select base if only one
+      setUnidades(u)
       if (!baseId && b.length === 1) {
         setBaseId(b[0].id)
         localStorage.setItem('base_id', String(b[0].id))
@@ -41,21 +59,47 @@ export default function NuevaVisita() {
     localStorage.setItem('base_id', String(id))
   }
 
-  const visitadasMap = useMemo(() => {
-    const map = new Map<number, VisitaHoy>()
-    visitasHoy.forEach((v) => map.set(v.unidad_id, v))
-    return map
-  }, [visitasHoy])
+  // Counters
+  const contadores = useMemo(() => {
+    const c: Record<FiltroKey, number> = {
+      todas: unidades.length,
+      faltan: 0, ok: 0, novedad: 0, inoperativa: 0, sin_llaves: 0, otras: 0, alertas: 0,
+    }
+    for (const u of unidades) {
+      const cat = clasificar(u)
+      c[cat]++
+      if (u.seguimientos_abiertos > 0) c.alertas++
+    }
+    return c
+  }, [unidades])
 
-  const filtered = useMemo(() => {
+  // Filtered + searched list
+  const listaFiltrada = useMemo(() => {
+    let list = unidades
+
+    if (filtro !== 'todas') {
+      if (filtro === 'alertas') {
+        list = list.filter((u) => u.seguimientos_abiertos > 0)
+      } else {
+        list = list.filter((u) => clasificar(u) === filtro)
+      }
+    }
+
     const q = busqueda.trim().toLowerCase()
-    if (!q) return []
-    return unidades.filter(
-      (u) => u.numero.toLowerCase().includes(q) || (u.placa && u.placa.toLowerCase().includes(q))
-    ).slice(0, 20)
-  }, [busqueda, unidades])
+    if (q) {
+      list = list.filter(
+        (u) => u.numero.toLowerCase().includes(q) || (u.placa && u.placa.toLowerCase().includes(q))
+      )
+    }
+
+    return list
+  }, [unidades, filtro, busqueda])
 
   const baseNombre = bases.find((b) => b.id === baseId)?.nombre || ''
+
+  function toggleFiltro(key: FiltroKey) {
+    setFiltro((prev) => (prev === key ? 'todas' : key))
+  }
 
   if (loading) {
     return <div className="page" style={{ display: 'flex', justifyContent: 'center', paddingTop: 60 }}><div className="spinner" /></div>
@@ -66,46 +110,45 @@ export default function NuevaVisita() {
       <h1 className="page-title">Nueva Visita</h1>
 
       {/* Base selector */}
-      <div className="card nv-base-card">
-        <span className="card-title">Base de trabajo</span>
-        <div className="nv-base-buttons">
-          {bases.map((b) => (
-            <button
-              key={b.id}
-              className={`btn ${baseId === b.id ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => handleBaseChange(b.id)}
-            >
-              {b.nombre}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Progress */}
-      {progreso && (
-        <div className="card nv-progress-card">
-          <div className="nv-progress-info">
-            <span className="nv-progress-numbers">{progreso.visitadas} / {progreso.total}</span>
-            <span className="nv-progress-label">unidades visitadas en {progreso.dias} días</span>
-          </div>
-          <div className="nv-progress-bar">
-            <div
-              className="nv-progress-fill"
-              style={{ width: `${progreso.total > 0 ? (progreso.visitadas / progreso.total) * 100 : 0}%` }}
-            />
+      {bases.length > 1 && (
+        <div className="card nv-base-card">
+          <span className="card-title">Base de trabajo</span>
+          <div className="nv-base-buttons">
+            {bases.map((b) => (
+              <button
+                key={b.id}
+                className={`btn ${baseId === b.id ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => handleBaseChange(b.id)}
+              >
+                {b.nombre}
+              </button>
+            ))}
           </div>
         </div>
       )}
+
+      {/* 8 counters grid */}
+      <div className="nv-counters">
+        {FILTROS.map((f) => (
+          <button
+            key={f.key}
+            className={`nv-counter-box ${filtro === f.key ? 'active' : ''}`}
+            onClick={() => toggleFiltro(f.key)}
+          >
+            <span className="nv-counter-num">{contadores[f.key]}</span>
+            <span className="nv-counter-label">{f.label}</span>
+          </button>
+        ))}
+      </div>
 
       {/* Search */}
       <div className="nv-search-wrapper">
         <input
           type="text"
-          placeholder="Buscar unidad por número o placa..."
+          placeholder="Buscar unidad por numero o placa..."
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
           className="nv-search"
-          autoFocus
         />
         {busqueda && (
           <button className="nv-search-clear" onClick={() => setBusqueda('')}>
@@ -114,56 +157,46 @@ export default function NuevaVisita() {
         )}
       </div>
 
-      {/* Results */}
-      {busqueda.trim() && (
-        <div className="nv-results">
-          {filtered.length === 0 ? (
-            <div className="empty-state">No se encontraron unidades</div>
-          ) : (
-            filtered.map((u) => {
-              const visitada = visitadasMap.get(u.id)
-              return (
-                <button
-                  key={u.id}
-                  className="card nv-unidad-row"
-                  onClick={() => navigate(`/visita/${u.id}`, { state: { unidad: u, baseId, baseNombre } })}
-                >
-                  <div className="nv-unidad-info">
-                    <span className="nv-unidad-numero">{u.numero}</span>
-                    {u.placa && <span className="nv-unidad-placa">{u.placa}</span>}
-                    {u.sede_nombre && <span className="nv-unidad-sede">{u.sede_nombre}</span>}
+      {/* Unit list */}
+      <div className="nv-unit-list">
+        {listaFiltrada.length === 0 ? (
+          <div className="empty-state">No se encontraron unidades</div>
+        ) : (
+          listaFiltrada.map((u) => {
+            const sinRevisar = !u.ultimo_estado
+            return (
+              <div
+                key={u.unidad_id}
+                className={`card nv-unit-row ${sinRevisar ? 'sin-revisar' : ''}`}
+                style={!sinRevisar && u.color_hex ? { borderLeftColor: u.color_hex } : undefined}
+              >
+                <div className="nv-unit-left">
+                  <span className="nv-unidad-numero">{u.numero}</span>
+                  {u.sede_nombre && <span className="nv-unidad-sede">{u.sede_nombre}</span>}
+                  <div className="nv-unit-status-row">
+                    {sinRevisar ? (
+                      <span className="chip chip-sin-revisar">Sin revisar</span>
+                    ) : (
+                      <span className="chip" style={{ background: (u.color_hex || '#888') + '22', color: u.color_hex || '#888' }}>
+                        {u.ultimo_estado}
+                      </span>
+                    )}
+                    {u.seguimientos_abiertos > 0 && (
+                      <span className="nv-seg-badge" title="Seguimientos abiertos">{u.seguimientos_abiertos}</span>
+                    )}
                   </div>
-                  {visitada && (
-                    <span
-                      className="chip"
-                      style={{ background: visitada.color_hex + '22', color: visitada.color_hex }}
-                    >
-                      {visitada.estado}
-                    </span>
-                  )}
+                </div>
+                <button
+                  className="btn btn-primary nv-revisar-btn"
+                  onClick={() => navigate(`/visita/${u.unidad_id}`, { state: { unidad: { id: u.unidad_id, numero: u.numero, placa: u.placa, sede_id: u.sede_id, sede_nombre: u.sede_nombre, activa: true }, baseId, baseNombre } })}
+                >
+                  Revisar
                 </button>
-              )
-            })
-          )}
-        </div>
-      )}
-
-      {/* Today's visits summary */}
-      {!busqueda.trim() && visitasHoy.length > 0 && (
-        <div className="nv-hoy">
-          <span className="card-title">Visitas de hoy ({visitasHoy.length})</span>
-          <div className="nv-hoy-list">
-            {visitasHoy.map((v) => (
-              <div key={v.id} className="card nv-hoy-item">
-                <span className="nv-unidad-numero">{v.unidad_numero}</span>
-                <span className="chip" style={{ background: v.color_hex + '22', color: v.color_hex }}>
-                  {v.estado}
-                </span>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+            )
+          })
+        )}
+      </div>
     </div>
   )
 }

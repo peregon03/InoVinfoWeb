@@ -164,6 +164,19 @@
   margin-top: 4px;
 }
 
+.hist-seg-creado {
+  border-left: 3px solid #D4A843;
+}
+
+.hist-seg-resuelto {
+  border-left: 3px solid var(--success);
+}
+
+.hist-seg-comment {
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
 /* Lightbox */
 .lightbox {
   position: fixed;
