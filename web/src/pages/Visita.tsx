@@ -17,11 +17,13 @@ const SECCIONES: Record<string, Record<string, boolean>> = {
 }
 
 const CAMARAS = ['delantera', 'trasera', 'cabina', 'lateral', 'directa'] as const
-const EQUIPOS = [
+const MONITORES = [
   { key: 'monitor_vision_directa', label: 'Monitor visión directa' },
   { key: 'visor_principal', label: 'Visor principal' },
+] as const
+
+const EQUIPOS = [
   { key: 'telo', label: 'Telo (pantalla táctil)' },
-  { key: 'gps', label: 'GPS' },
   { key: 'wifi', label: 'WiFi / credenciales' },
 ] as const
 
@@ -78,9 +80,10 @@ export default function Visita() {
     delantera: 'bien', trasera: 'bien', cabina: 'bien', lateral: 'bien', directa: 'bien',
   })
   const [equipos, setEquipos] = useState<Record<string, CheckVal>>({
-    monitor_vision_directa: 'bien', visor_principal: 'bien', telo: 'bien', gps: 'bien', wifi: 'bien',
+    monitor_vision_directa: 'bien', visor_principal: 'bien', telo: 'bien', wifi: 'bien',
   })
   const [camarasOpen, setCamarasOpen] = useState(false)
+  const [monitoresOpen, setMonitoresOpen] = useState(false)
 
   // Hallazgo
   const [hallazgo, setHallazgo] = useState('')
@@ -268,6 +271,7 @@ export default function Visita() {
         estado: estadoNombre,
         suministros: sumsTexto || 'Ninguno',
         descripcion: desc,
+        checklist: secciones.checklist ? { camaras, equipos } : null,
       })
       setIaResultado(result.observacion)
       setIaUsada(true)
@@ -597,10 +601,12 @@ export default function Visita() {
         </div>
       )}
 
-      {/* 4. CAMARAS Y EQUIPOS */}
+      {/* 4. CAMARAS, MONITORES Y EQUIPOS */}
       {secciones.checklist && (
         <div className="card visita-section">
           <span className="card-title">Cámaras y equipos</span>
+
+          {/* Acordeón Cámaras */}
           <div className={`checklist-group ${hasCamaraFalla ? 'has-falla' : ''}`}>
             <button className="checklist-accordion" onClick={() => setCamarasOpen(!camarasOpen)}>
               <span>Cámaras</span>
@@ -628,6 +634,49 @@ export default function Visita() {
               </div>
             )}
           </div>
+
+          {/* Acordeón Monitores */}
+          <div className={`checklist-group ${Object.entries(equipos).filter(([k]) => MONITORES.some((m) => m.key === k)).some(([, v]) => v === 'falla') ? 'has-falla' : ''}`}>
+            <button className="checklist-accordion" onClick={() => setMonitoresOpen(!monitoresOpen)}>
+              <span>Monitores</span>
+              <span className="checklist-summary">
+                {(() => {
+                  const monKeys = MONITORES.map((m) => m.key)
+                  const fallas = monKeys.filter((k) => equipos[k] === 'falla').length
+                  const noTiene = monKeys.filter((k) => equipos[k] === 'no_tiene').length
+                  const bien = monKeys.filter((k) => equipos[k] === 'bien').length
+                  if (fallas === 0 && noTiene === 0) return `${bien} bien`
+                  const parts: string[] = []
+                  if (fallas) parts.push(`${fallas} falla`)
+                  if (noTiene) parts.push(`${noTiene} no tiene`)
+                  return parts.join(' · ')
+                })()}
+              </span>
+              <span className={`accordion-arrow ${monitoresOpen ? 'open' : ''}`}>▼</span>
+            </button>
+            {monitoresOpen && (
+              <div className="checklist-items">
+                {MONITORES.map((mon) => (
+                  <div key={mon.key} className="checklist-row">
+                    <span className="checklist-label">{mon.label}</span>
+                    <div className="checklist-btns">
+                      {(['bien', 'falla', 'no_tiene'] as const).map((val) => (
+                        <button
+                          key={val}
+                          className={`check-btn ${equipos[mon.key] === val ? `active-${val}` : ''}`}
+                          onClick={() => setEquipos((p) => ({ ...p, [mon.key]: val }))}
+                        >
+                          {val === 'bien' ? 'Bien' : val === 'falla' ? 'Falla' : 'No tiene'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Equipos sueltos */}
           {EQUIPOS.map((eq) => (
             <div key={eq.key} className="checklist-row">
               <span className="checklist-label">{eq.label}</span>

@@ -9,7 +9,26 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GE
 
 const TEXTO_BASE = 'Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras';
 
-function buildPrompt({ unidad_numero, estado, suministros, descripcion }) {
+function formatChecklist(checklist) {
+    if (!checklist) return 'No aplica';
+    const lines = [];
+    const labels = {
+        delantera: 'Cámara delantera', trasera: 'Cámara trasera', cabina: 'Cámara de cabina',
+        lateral: 'Cámara lateral', directa: 'Cámara directa',
+        monitor_vision_directa: 'Monitor de visión directa', visor_principal: 'Visor principal',
+        telo: 'Telo (pantalla táctil)', wifi: 'WiFi/credenciales',
+    };
+    for (const [grupo, items] of Object.entries(checklist)) {
+        for (const [key, val] of Object.entries(items)) {
+            if (val !== 'bien') {
+                lines.push(`${labels[key] || key}: ${val === 'falla' ? 'FALLA' : 'No tiene'}`);
+            }
+        }
+    }
+    return lines.length > 0 ? lines.join(', ') : 'Todo en buen estado';
+}
+
+function buildPrompt({ unidad_numero, estado, suministros, descripcion, checklist }) {
     return `Eres el redactor técnico de Electroinova SAS. Redactas informes de mantenimiento de DVR Móvil para el cliente Veolia.
 
 TEXTO BASE OBLIGATORIO (siempre inicia con esto cuando el estado es OK o Con novedad):
@@ -56,6 +75,7 @@ Salida: "${TEXTO_BASE}"
 DATOS DE ESTA VISITA:
 - Unidad: ${unidad_numero}
 - Estado reportado: ${estado}
+- Checklist de equipos: ${formatChecklist(checklist)}
 - Suministros utilizados: ${suministros || 'Ninguno'}
 - Descripción del técnico: "${descripcion}"
 
@@ -69,7 +89,7 @@ router.post('/redactar', async (req, res) => {
         return res.status(500).json({ error: 'GEMINI_API_KEY no configurada en el servidor' });
     }
 
-    const { unidad_numero, estado, suministros, descripcion } = req.body;
+    const { unidad_numero, estado, suministros, descripcion, checklist } = req.body;
     if (!descripcion || !descripcion.trim()) {
         return res.status(400).json({ error: 'La descripción del técnico es requerida' });
     }
@@ -80,6 +100,7 @@ router.post('/redactar', async (req, res) => {
             estado: estado || '',
             suministros: suministros || '',
             descripcion: descripcion.trim(),
+            checklist: checklist || null,
         });
 
         const payload = JSON.stringify({

@@ -44,6 +44,21 @@
   color: var(--text-secondary);
 }
 
+.nv-progress-bar {
+  height: 8px;
+  background: var(--bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.nv-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  min-width: 2px;
+}
+
 /* ── Counters grid: 4×2 ─────────────────────────── */
 .nv-counters {
   display: grid;
@@ -109,87 +124,96 @@
   font-size: 1rem;
 }
 
-/* ── Unit list ───────────────────────────────────── */
-.nv-unit-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-sm);
+/* ── Compact card grid ───────────────────────────── */
+.nv-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 6px;
 }
 
-.nv-unit-row {
+.nv-mini-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.nv-mini-card.expanded {
+  grid-column: 1 / -1;
+}
+
+.nv-mini-btn {
+  position: relative;
+  border: 2px solid;
+  border-radius: 10px;
+  padding: 10px 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  min-height: 48px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px var(--gap);
-  border-left: 3px solid transparent;
-  transition: border-color var(--transition);
+  justify-content: center;
 }
 
-.nv-unit-row.sin-revisar {
-  border-left-color: #D4A843;
+.nv-mini-btn:active {
+  transform: scale(0.95);
 }
 
-.nv-unit-left {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.nv-unidad-numero {
+.nv-mini-num {
+  font-size: 0.85rem;
   font-weight: 700;
-  font-size: 1.1rem;
+  line-height: 1.1;
 }
 
-.nv-unidad-sede {
+.nv-mini-alert {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  background: var(--error);
+  color: white;
+  border-radius: 50%;
+  font-size: 0.6rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Expanded detail below the card, spans full width */
+.nv-mini-detail {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 10px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.nv-mini-sede {
   font-size: 0.8rem;
   color: var(--text-secondary);
 }
 
-.nv-unit-status-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 2px;
+.nv-mini-estado {
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
-.chip-sin-revisar {
-  background: rgba(212, 168, 67, 0.15);
-  color: #D4A843;
-}
-
-.nv-seg-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(226, 75, 74, 0.2);
-  color: var(--error);
-  font-size: 0.7rem;
-  font-weight: 700;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-}
-
-.nv-revisar-btn {
-  flex-shrink: 0;
-  padding: 8px 16px;
-  font-size: 0.85rem;
-  min-height: 36px;
-}
-
-/* ── Progress bar (reused in Visita) ─────────────── */
-.nv-progress-bar {
-  height: 8px;
+.nv-mini-placa {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
   background: var(--bg);
+  padding: 2px 8px;
   border-radius: 4px;
-  overflow: hidden;
 }
 
-.nv-progress-fill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 4px;
-  transition: width 0.5s ease;
-  min-width: 2px;
+.nv-mini-revisar {
+  margin-left: auto;
+  padding: 6px 16px;
+  font-size: 0.82rem;
+  min-height: 34px;
 }

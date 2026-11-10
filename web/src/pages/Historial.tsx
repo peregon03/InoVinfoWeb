@@ -61,7 +61,7 @@ export default function Historial() {
     delantera: 'Cám. delantera', trasera: 'Cám. trasera', cabina: 'Cám. cabina',
     lateral: 'Cám. lateral', directa: 'Cám. directa',
     monitor_vision_directa: 'Monitor visión directa', visor_principal: 'Visor principal',
-    telo: 'Telo', gps: 'GPS', wifi: 'WiFi',
+    telo: 'Telo', wifi: 'WiFi',
   }
 
   return (

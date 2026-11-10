@@ -61,7 +61,6 @@ export function generarHallazgoAutomatico(checklist: { camaras: Record<string, s
     monitor_vision_directa: 'monitor de visión directa',
     visor_principal: 'visor principal',
     telo: 'telo',
-    gps: 'GPS',
     wifi: 'WiFi/credenciales',
   }
 

@@ -17,6 +17,23 @@ const FILTROS = [
 
 type FiltroKey = typeof FILTROS[number]['key']
 
+// Color mapping for mini-cards
+const ESTADO_COLORS: Record<string, string> = {
+  'OK': '#2E7D32',
+  'Con novedad': '#8BC34A',
+  'Inoperativa': '#E24B4A',
+  'Sin llaves': '#757575',
+  'No está en la base': '#757575',
+  'Pendiente': '#757575',
+  'Bat. desconectada': '#757575',
+}
+const COLOR_SIN_REVISAR = '#555'
+
+function getCardColor(u: UnidadEstado): string {
+  if (!u.ultimo_estado) return COLOR_SIN_REVISAR
+  return ESTADO_COLORS[u.ultimo_estado] || '#757575'
+}
+
 function clasificar(u: UnidadEstado): FiltroKey {
   if (!u.ultimo_estado) return 'faltan'
   if (u.ultimo_estado === 'OK') return 'ok'
@@ -39,6 +56,7 @@ export default function NuevaVisita() {
   const [todasUnidades, setTodasUnidades] = useState<UnidadEstado[]>([])
   const [filtro, setFiltro] = useState<FiltroKey>('todas')
   const [busqueda, setBusqueda] = useState('')
+  const [expandedId, setExpandedId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -59,25 +77,21 @@ export default function NuevaVisita() {
   function toggleSede(id: number) {
     setSedeIds((prev) => {
       const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       localStorage.setItem('sede_ids', JSON.stringify([...next]))
       return next
     })
     setFiltro('todas')
     setBusqueda('')
+    setExpandedId(null)
   }
 
-  // Units filtered by selected sedes
   const unidadesPorSede = useMemo(() => {
     if (sedeIds.size === 0) return []
     return todasUnidades.filter((u) => u.sede_id != null && sedeIds.has(u.sede_id))
   }, [todasUnidades, sedeIds])
 
-  // Counters based on the sede-filtered list
   const contadores = useMemo(() => {
     const c: Record<FiltroKey, number> = {
       todas: unidadesPorSede.length,
@@ -91,14 +105,12 @@ export default function NuevaVisita() {
     return c
   }, [unidadesPorSede])
 
-  // Progress bar based on sede-filtered list
   const progreso = useMemo(() => {
     const total = unidadesPorSede.length
     const visitadas = unidadesPorSede.filter((u) => u.ultimo_estado != null).length
     return { visitadas, total }
   }, [unidadesPorSede])
 
-  // Filtered + searched list
   const listaFiltrada = useMemo(() => {
     let list = unidadesPorSede
 
@@ -120,11 +132,11 @@ export default function NuevaVisita() {
     return list
   }, [unidadesPorSede, filtro, busqueda])
 
-  // Names of selected sedes for display
   const sedeNombres = sedes.filter((s) => sedeIds.has(s.id)).map((s) => s.nombre).join(' · ')
 
   function toggleFiltro(key: FiltroKey) {
     setFiltro((prev) => (prev === key ? 'todas' : key))
+    setExpandedId(null)
   }
 
   if (loading) {
@@ -135,7 +147,7 @@ export default function NuevaVisita() {
     <div className="page">
       <h1 className="page-title">Nueva Visita</h1>
 
-      {/* Sede / Base selector — multi-select */}
+      {/* Base selector — multi-select */}
       <div className="card nv-base-card">
         <span className="card-title">Base operativa</span>
         <div className="nv-base-buttons">
@@ -154,7 +166,6 @@ export default function NuevaVisita() {
         )}
       </div>
 
-      {/* Show counters and list only when at least one sede is selected */}
       {sedeIds.size > 0 ? (
         <>
           {/* Progress bar */}
@@ -171,7 +182,7 @@ export default function NuevaVisita() {
             </div>
           </div>
 
-          {/* 8 counters grid */}
+          {/* 8 counters */}
           <div className="nv-counters">
             {FILTROS.map((f) => (
               <button
@@ -201,41 +212,39 @@ export default function NuevaVisita() {
             )}
           </div>
 
-          {/* Unit list */}
-          <div className="nv-unit-list">
+          {/* Compact unit cards grid */}
+          <div className="nv-cards-grid">
             {listaFiltrada.length === 0 ? (
-              <div className="empty-state">No se encontraron unidades</div>
+              <div className="empty-state" style={{ gridColumn: '1 / -1' }}>No se encontraron unidades</div>
             ) : (
               listaFiltrada.map((u) => {
-                const sinRevisar = !u.ultimo_estado
+                const color = getCardColor(u)
+                const isExpanded = expandedId === u.unidad_id
                 return (
-                  <div
-                    key={u.unidad_id}
-                    className={`card nv-unit-row ${sinRevisar ? 'sin-revisar' : ''}`}
-                    style={!sinRevisar && u.color_hex ? { borderLeftColor: u.color_hex } : undefined}
-                  >
-                    <div className="nv-unit-left">
-                      <span className="nv-unidad-numero">{u.numero}</span>
-                      {u.sede_nombre && <span className="nv-unidad-sede">{u.sede_nombre}</span>}
-                      <div className="nv-unit-status-row">
-                        {sinRevisar ? (
-                          <span className="chip chip-sin-revisar">Sin revisar</span>
-                        ) : (
-                          <span className="chip" style={{ background: (u.color_hex || '#888') + '22', color: u.color_hex || '#888' }}>
-                            {u.ultimo_estado}
-                          </span>
-                        )}
-                        {u.seguimientos_abiertos > 0 && (
-                          <span className="nv-seg-badge" title="Seguimientos abiertos">{u.seguimientos_abiertos}</span>
-                        )}
-                      </div>
-                    </div>
+                  <div key={u.unidad_id} className={`nv-mini-card ${isExpanded ? 'expanded' : ''}`}>
                     <button
-                      className="btn btn-primary nv-revisar-btn"
-                      onClick={() => navigate(`/visita/${u.unidad_id}`, { state: { unidad: { id: u.unidad_id, numero: u.numero, placa: u.placa, sede_id: u.sede_id, sede_nombre: u.sede_nombre, activa: true }, baseId: u.sede_id, baseNombre: u.sede_nombre || '' } })}
+                      className="nv-mini-btn"
+                      style={{ background: color + '25', borderColor: color, color }}
+                      onClick={() => setExpandedId(isExpanded ? null : u.unidad_id)}
                     >
-                      Revisar
+                      <span className="nv-mini-num">{u.numero}</span>
+                      {u.seguimientos_abiertos > 0 && <span className="nv-mini-alert">!</span>}
                     </button>
+                    {isExpanded && (
+                      <div className="nv-mini-detail">
+                        {u.sede_nombre && <span className="nv-mini-sede">{u.sede_nombre}</span>}
+                        <span className="nv-mini-estado">
+                          {u.ultimo_estado || 'Sin revisar'}
+                        </span>
+                        {u.placa && <span className="nv-mini-placa">{u.placa}</span>}
+                        <button
+                          className="btn btn-primary nv-mini-revisar"
+                          onClick={() => navigate(`/visita/${u.unidad_id}`, { state: { unidad: { id: u.unidad_id, numero: u.numero, placa: u.placa, sede_id: u.sede_id, sede_nombre: u.sede_nombre, activa: true }, baseId: u.sede_id, baseNombre: u.sede_nombre || '' } })}
+                        >
+                          Revisar
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )
               })
