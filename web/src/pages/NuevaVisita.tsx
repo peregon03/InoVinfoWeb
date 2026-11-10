@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
-import type { Base, UnidadEstado } from '../types'
+import type { Sede, UnidadEstado } from '../types'
 import './NuevaVisita.css'
 
 const FILTROS = [
@@ -28,9 +28,9 @@ function clasificar(u: UnidadEstado): FiltroKey {
 
 export default function NuevaVisita() {
   const navigate = useNavigate()
-  const [bases, setBases] = useState<Base[]>([])
-  const [baseId, setBaseId] = useState<number | null>(() => {
-    const saved = localStorage.getItem('base_id')
+  const [sedes, setSedes] = useState<Sede[]>([])
+  const [sedeId, setSedeId] = useState<number | null>(() => {
+    const saved = localStorage.getItem('sede_id')
     return saved ? Number(saved) : null
   })
   const [todasUnidades, setTodasUnidades] = useState<UnidadEstado[]>([])
@@ -40,59 +40,55 @@ export default function NuevaVisita() {
 
   useEffect(() => {
     Promise.all([
-      api.get<Base[]>('/catalogos/bases'),
+      api.get<Sede[]>('/catalogos/sedes'),
       api.get<UnidadEstado[]>('/unidades/estado', { dias: '15' }),
-    ]).then(([b, u]) => {
-      setBases(b.filter((x) => x.activa))
+    ]).then(([s, u]) => {
+      setSedes(s.filter((x) => x.activa))
       setTodasUnidades(u)
-      if (!baseId && b.length === 1) {
-        setBaseId(b[0].id)
-        localStorage.setItem('base_id', String(b[0].id))
+      if (!sedeId && s.length === 1) {
+        setSedeId(s[0].id)
+        localStorage.setItem('sede_id', String(s[0].id))
       }
     }).finally(() => setLoading(false))
   }, [])
 
-  function handleBaseChange(id: number) {
-    setBaseId(id)
-    localStorage.setItem('base_id', String(id))
+  function handleSedeChange(id: number) {
+    setSedeId(id)
+    localStorage.setItem('sede_id', String(id))
     setFiltro('todas')
     setBusqueda('')
   }
 
-  // Units filtered by selected base:
-  // - Units whose last visit was at this base
-  // - Units without any visit (sin revisar) — they appear in all bases
-  const unidadesPorBase = useMemo(() => {
-    if (!baseId) return todasUnidades
-    return todasUnidades.filter(
-      (u) => u.ultima_base_id === baseId || !u.ultimo_estado
-    )
-  }, [todasUnidades, baseId])
+  // Units filtered by selected sede (sede = base operativa)
+  const unidadesPorSede = useMemo(() => {
+    if (!sedeId) return todasUnidades
+    return todasUnidades.filter((u) => u.sede_id === sedeId)
+  }, [todasUnidades, sedeId])
 
-  // Counters based on the base-filtered list
+  // Counters based on the sede-filtered list
   const contadores = useMemo(() => {
     const c: Record<FiltroKey, number> = {
-      todas: unidadesPorBase.length,
+      todas: unidadesPorSede.length,
       faltan: 0, ok: 0, novedad: 0, inoperativa: 0, sin_llaves: 0, otras: 0, alertas: 0,
     }
-    for (const u of unidadesPorBase) {
+    for (const u of unidadesPorSede) {
       const cat = clasificar(u)
       c[cat]++
       if (u.seguimientos_abiertos > 0) c.alertas++
     }
     return c
-  }, [unidadesPorBase])
+  }, [unidadesPorSede])
 
-  // Progress bar based on base-filtered list
+  // Progress bar based on sede-filtered list
   const progreso = useMemo(() => {
-    const total = unidadesPorBase.length
-    const visitadas = unidadesPorBase.filter((u) => u.ultimo_estado != null).length
+    const total = unidadesPorSede.length
+    const visitadas = unidadesPorSede.filter((u) => u.ultimo_estado != null).length
     return { visitadas, total }
-  }, [unidadesPorBase])
+  }, [unidadesPorSede])
 
   // Filtered + searched list
   const listaFiltrada = useMemo(() => {
-    let list = unidadesPorBase
+    let list = unidadesPorSede
 
     if (filtro !== 'todas') {
       if (filtro === 'alertas') {
@@ -110,9 +106,9 @@ export default function NuevaVisita() {
     }
 
     return list
-  }, [unidadesPorBase, filtro, busqueda])
+  }, [unidadesPorSede, filtro, busqueda])
 
-  const baseNombre = bases.find((b) => b.id === baseId)?.nombre || ''
+  const sedeNombre = sedes.find((s) => s.id === sedeId)?.nombre || ''
 
   function toggleFiltro(key: FiltroKey) {
     setFiltro((prev) => (prev === key ? 'todas' : key))
@@ -126,41 +122,39 @@ export default function NuevaVisita() {
     <div className="page">
       <h1 className="page-title">Nueva Visita</h1>
 
-      {/* Base selector */}
+      {/* Sede / Base selector */}
       <div className="card nv-base-card">
         <span className="card-title">Base operativa</span>
         <div className="nv-base-buttons">
-          {bases.map((b) => (
+          {sedes.map((s) => (
             <button
-              key={b.id}
-              className={`btn ${baseId === b.id ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => handleBaseChange(b.id)}
+              key={s.id}
+              className={`btn ${sedeId === s.id ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => handleSedeChange(s.id)}
             >
-              {b.nombre}
+              {s.nombre}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Progress bar */}
-      {baseId && (
-        <div className="card nv-progress-card">
-          <div className="nv-progress-info">
-            <span className="nv-progress-numbers">{progreso.visitadas} / {progreso.total}</span>
-            <span className="nv-progress-label">unidades visitadas en 15 días</span>
-          </div>
-          <div className="nv-progress-bar">
-            <div
-              className="nv-progress-fill"
-              style={{ width: `${progreso.total > 0 ? (progreso.visitadas / progreso.total) * 100 : 0}%` }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Show counters and list only when a base is selected */}
-      {baseId ? (
+      {/* Show counters and list only when a sede is selected */}
+      {sedeId ? (
         <>
+          {/* Progress bar */}
+          <div className="card nv-progress-card">
+            <div className="nv-progress-info">
+              <span className="nv-progress-numbers">{progreso.visitadas} / {progreso.total}</span>
+              <span className="nv-progress-label">unidades visitadas en 15 días</span>
+            </div>
+            <div className="nv-progress-bar">
+              <div
+                className="nv-progress-fill"
+                style={{ width: `${progreso.total > 0 ? (progreso.visitadas / progreso.total) * 100 : 0}%` }}
+              />
+            </div>
+          </div>
+
           {/* 8 counters grid */}
           <div className="nv-counters">
             {FILTROS.map((f) => (
@@ -222,7 +216,7 @@ export default function NuevaVisita() {
                     </div>
                     <button
                       className="btn btn-primary nv-revisar-btn"
-                      onClick={() => navigate(`/visita/${u.unidad_id}`, { state: { unidad: { id: u.unidad_id, numero: u.numero, placa: u.placa, sede_id: u.sede_id, sede_nombre: u.sede_nombre, activa: true }, baseId, baseNombre } })}
+                      onClick={() => navigate(`/visita/${u.unidad_id}`, { state: { unidad: { id: u.unidad_id, numero: u.numero, placa: u.placa, sede_id: u.sede_id, sede_nombre: u.sede_nombre, activa: true }, baseId: sedeId, baseNombre: sedeNombre } })}
                     >
                       Revisar
                     </button>
