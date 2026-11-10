@@ -26,7 +26,7 @@ app.get('/health', (req, res) => {
 });
 
 // ── App web estática (SPA) ────────────────────────────────────────────────────
-const webDistPath = path.join(__dirname, '..', '..', 'InovInfoWeb', 'web', 'dist');
+const webDistPath = path.join(__dirname, '..', '..', '..', 'InovInfoWeb', 'web', 'dist');
 app.use(express.static(webDistPath));
 
 // Fallback SPA: toda ruta que no sea /api ni /health devuelve index.html
