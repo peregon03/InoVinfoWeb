@@ -47,7 +47,7 @@ export function construirObservacion(params: ObservacionParams): string {
   return texto
 }
 
-export function generarHallazgoAutomatico(checklist: Record<string, Record<string, string>> | null): string {
+export function generarHallazgoAutomatico(checklist: { camaras: Record<string, string>; equipos: Record<string, string> } | null): string {
   if (!checklist) return ''
 
   const fallas: string[] = []
