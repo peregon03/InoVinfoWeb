@@ -341,7 +341,7 @@ export default function Visita() {
         observacion_estructurada: obs || null,
         novedad_texto: hallazgoFinal || null,
         sede_id: sedeId,
-        base_id: baseId,
+        base_id: null,
         es_extraordinaria: esExtraordinaria,
         es_otra_sede: esOtraSede,
         // v2: legacy fields still sent for Android compat
