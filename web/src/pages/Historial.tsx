@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { api, ApiError } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import type { Visita, Unidad } from '../types'
@@ -17,6 +18,7 @@ function extractDriveId(url: string): string | null {
 
 export default function Historial() {
   const { isCoordinadora } = useAuth()
+  const location = useLocation()
   const [unidades, setUnidades] = useState<Unidad[]>([])
   const [busqueda, setBusqueda] = useState('')
   const [unidadId, setUnidadId] = useState<number | null>(null)
@@ -28,6 +30,16 @@ export default function Historial() {
 
   useEffect(() => {
     api.get<Unidad[]>('/catalogos/unidades').then((u) => setUnidades(u.filter((x) => x.activa)))
+  }, [])
+
+  // Auto-cargar historial si se navega desde NuevaVisita con state
+  useEffect(() => {
+    const state = location.state as { unidadId?: number; unidadNumero?: string } | null
+    if (state?.unidadId && state?.unidadNumero) {
+      setBusqueda(state.unidadNumero)
+      buscar(state.unidadId)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function buscar(uid: number) {
@@ -56,6 +68,10 @@ export default function Historial() {
         (u.placa && u.placa.toLowerCase().includes(busqueda.toLowerCase()))
       ).slice(0, 15)
     : []
+
+  const seisMesesAtras = new Date()
+  seisMesesAtras.setMonth(seisMesesAtras.getMonth() - 6)
+  const visitasFiltradas = visitas.filter((v) => new Date(v.created_at) >= seisMesesAtras)
 
   const checklistLabels: Record<string, string> = {
     delantera: 'Cám. delantera', trasera: 'Cám. trasera', cabina: 'Cám. cabina',
@@ -94,8 +110,12 @@ export default function Historial() {
         <div className="empty-state">No hay visitas registradas para esta unidad</div>
       )}
 
+      {!loading && unidadId && visitas.length > 0 && visitasFiltradas.length === 0 && (
+        <div className="empty-state">No hay visitas en los últimos 6 meses</div>
+      )}
+
       <div className="hist-list">
-        {visitas.map((v) => {
+        {visitasFiltradas.map((v) => {
           const expanded = expandedId === v.id
           const fotosAntes = (v.fotos_detalle || []).filter((f) => f.tipo === 'antes')
           const fotosDespues = (v.fotos_detalle || []).filter((f) => f.tipo === 'despues')
@@ -117,7 +137,7 @@ export default function Historial() {
               </div>
 
               {v.sede_nombre && (
-                <p className="hist-meta">{v.sede_nombre}{v.base_nombre ? ` · base ${v.base_nombre}` : ''}</p>
+                <p className="hist-meta">{v.sede_nombre}</p>
               )}
 
               {expanded && (

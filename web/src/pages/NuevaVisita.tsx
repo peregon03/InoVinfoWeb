@@ -238,8 +238,14 @@ export default function NuevaVisita() {
                         </span>
                         {u.placa && <span className="nv-mini-placa">{u.placa}</span>}
                         <button
+                          className="btn btn-outline nv-mini-historial"
+                          onClick={() => navigate('/historial', { state: { unidadId: u.unidad_id, unidadNumero: u.numero } })}
+                        >
+                          Historial
+                        </button>
+                        <button
                           className="btn btn-primary nv-mini-revisar"
-                          onClick={() => navigate(`/visita/${u.unidad_id}`, { state: { unidad: { id: u.unidad_id, numero: u.numero, placa: u.placa, sede_id: u.sede_id, sede_nombre: u.sede_nombre, activa: true }, baseId: u.sede_id, baseNombre: u.sede_nombre || '' } })}
+                          onClick={() => navigate(`/visita/${u.unidad_id}`, { state: { unidad: { id: u.unidad_id, numero: u.numero, placa: u.placa, sede_id: u.sede_id, sede_nombre: u.sede_nombre, activa: true }, sedeNombre: u.sede_nombre || '' } })}
                         >
                           Revisar
                         </button>

@@ -211,8 +211,14 @@
   border-radius: 4px;
 }
 
-.nv-mini-revisar {
+.nv-mini-historial {
   margin-left: auto;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  min-height: 28px;
+}
+
+.nv-mini-revisar {
   padding: 6px 16px;
   font-size: 0.82rem;
   min-height: 34px;

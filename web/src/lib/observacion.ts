@@ -3,7 +3,7 @@ interface ObservacionParams {
   hallazgo?: string
   esExtraordinaria?: boolean
   esOtraSede?: boolean
-  baseNombre?: string
+  sedeNombre?: string
 }
 
 const TEXTO_ESTANDAR = 'Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras'
@@ -17,7 +17,7 @@ const TEXTOS_POR_ESTADO: Record<string, string> = {
 }
 
 export function construirObservacion(params: ObservacionParams): string {
-  const { estado, hallazgo, esExtraordinaria, esOtraSede, baseNombre } = params
+  const { estado, hallazgo, esExtraordinaria, esOtraSede, sedeNombre } = params
 
   if (estado === 'Pendiente') return ''
 
@@ -40,8 +40,8 @@ export function construirObservacion(params: ObservacionParams): string {
     texto += '. Visita extraordinaria a solicitud del área de mantenimiento'
   }
 
-  if (esOtraSede && baseNombre) {
-    texto += ` (Unidad revisada en base operativa ${baseNombre})`
+  if (esOtraSede && sedeNombre) {
+    texto += ` (Unidad revisada en base operativa ${sedeNombre})`
   }
 
   return texto

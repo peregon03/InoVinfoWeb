@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { api, ApiError } from '../lib/api'
+import { useAuth } from '../context/AuthContext'
 import { construirObservacion, generarHallazgoAutomatico } from '../lib/observacion'
 import { procesarFoto, MAX_FOTOS_TOTAL } from '../lib/fotos'
 import type { Unidad, Sede, EstadoVisita, Suministro, Checklist, Visita as VisitaType, Seguimiento, SuministroReciente } from '../types'
@@ -53,7 +54,8 @@ export default function Visita() {
   const { unidadId } = useParams<{ unidadId: string }>()
   const location = useLocation()
   const navigate = useNavigate()
-  const state = location.state as { unidad?: Unidad; baseId?: number; baseNombre?: string } | null
+  const { tienePermiso } = useAuth()
+  const state = location.state as { unidad?: Unidad; sedeNombre?: string } | null
 
   const [unidad, setUnidad] = useState<Unidad | null>(state?.unidad || null)
   const [sedes, setSedes] = useState<Sede[]>([])
@@ -124,8 +126,7 @@ export default function Visita() {
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
 
-  const baseId = state?.baseId || Number(localStorage.getItem('base_id')) || null
-  const baseNombre = state?.baseNombre || localStorage.getItem('base_nombre') || ''
+  const sedeNombre = state?.sedeNombre || ''
 
   // Carga catálogos y datos previos de la unidad
   useEffect(() => {
@@ -297,9 +298,9 @@ export default function Visita() {
       hallazgo: h,
       esExtraordinaria,
       esOtraSede,
-      baseNombre,
+      sedeNombre,
     })
-  }, [estadoNombre, hallazgo, camaras, equipos, esExtraordinaria, esOtraSede, baseNombre])
+  }, [estadoNombre, hallazgo, camaras, equipos, esExtraordinaria, esOtraSede, sedeNombre])
 
   function validate(): string | null {
     if (!estadoId) return 'Selecciona un estado'
@@ -460,7 +461,6 @@ export default function Visita() {
           <h1 className="visita-unidad-num">{unidad?.numero || unidadId}</h1>
           <p className="visita-sub">
             {sedes.find((s) => s.id === (sedeId || unidad?.sede_id))?.nombre || 'Sin sede'}
-            {baseNombre && ` · base ${baseNombre}`}
           </p>
         </div>
       </div>
@@ -530,7 +530,7 @@ export default function Visita() {
         </div>
 
         <div className="form-group" style={{ marginTop: 16 }}>
-          <label>Unidad de negocio</label>
+          <label>Base operativa</label>
           <select value={sedeId || ''} onChange={(e) => setSedeId(Number(e.target.value) || null)}>
             <option value="">Seleccionar...</option>
             {sedes.map((s) => (
@@ -764,6 +764,23 @@ export default function Visita() {
                       {s.nombre}
                     </button>
                   ))}
+                {sumBusqueda.trim() && suministrosCat.filter((s) => s.nombre.toLowerCase().includes(sumBusqueda.toLowerCase())).length === 0 && tienePermiso('EDITAR_CATALOGOS') && (
+                  <button
+                    className="sum-option"
+                    style={{ color: 'var(--accent)', fontWeight: 600 }}
+                    onClick={async () => {
+                      try {
+                        const nuevo = await api.post<Suministro>('/catalogos/suministros', { nombre: sumBusqueda.trim() })
+                        setSuministrosCat((p) => [...p, nuevo])
+                        confirmAddSuministro(nuevo, false)
+                      } catch (e) {
+                        setError(e instanceof ApiError ? e.message : 'Error al crear suministro')
+                      }
+                    }}
+                  >
+                    + Crear "{sumBusqueda.trim()}"
+                  </button>
+                )}
               </div>
               <button
                 className="btn btn-outline"
@@ -839,7 +856,7 @@ export default function Visita() {
           </label>
           <label className="check-label">
             <input type="checkbox" checked={esOtraSede} onChange={(e) => setEsOtraSede(e.target.checked)} />
-            <span>Es de otra sede: agregar "(Unidad revisada en base operativa {baseNombre || '...'})"</span>
+            <span>Es de otra sede: agregar "(Unidad revisada en base operativa {sedeNombre || '...'})"</span>
           </label>
 
           {/* v2: Hacer seguimiento */}
