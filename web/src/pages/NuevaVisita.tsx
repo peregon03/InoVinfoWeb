@@ -1,8 +1,23 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
-import type { Sede, UnidadEstado } from '../types'
+import type { Sede, UnidadEstado, EstadoVisita, Suministro } from '../types'
 import './NuevaVisita.css'
+
+// Claves de localStorage compartidas con Visita.tsx
+const LS_SEDES = 'cache_sedes'
+const LS_ESTADOS = 'cache_estados'
+const LS_SUMINISTROS = 'cache_suministros'
+const LS_UNIDADES_ESTADO = 'cache_unidades_estado'
+
+function lsParse<T>(key: string): T | null {
+  try {
+    const raw = localStorage.getItem(key)
+    return raw ? (JSON.parse(raw) as T) : null
+  } catch {
+    return null
+  }
+}
 
 const FILTROS = [
   { key: 'todas', label: 'Todas' },
@@ -61,13 +76,26 @@ export default function NuevaVisita() {
 
   useEffect(() => {
     Promise.all([
-      api.get<Sede[]>('/catalogos/sedes'),
-      api.get<UnidadEstado[]>('/unidades/estado', { dias: '15' }),
+      api.get<Sede[]>('/catalogos/sedes').then((data) => {
+        localStorage.setItem(LS_SEDES, JSON.stringify(data))
+        return data
+      }).catch(() => lsParse<Sede[]>(LS_SEDES) ?? []),
+      api.get<UnidadEstado[]>('/unidades/estado', { dias: '15' }).then((data) => {
+        localStorage.setItem(LS_UNIDADES_ESTADO, JSON.stringify(data))
+        return data
+      }).catch(() => lsParse<UnidadEstado[]>(LS_UNIDADES_ESTADO) ?? []),
+      // Precargar estados y suministros para que Visita funcione offline
+      api.get<EstadoVisita[]>('/catalogos/estados').then((data) => {
+        localStorage.setItem(LS_ESTADOS, JSON.stringify(data))
+      }).catch(() => {}),
+      api.get<Suministro[]>('/catalogos/suministros').then((data) => {
+        localStorage.setItem(LS_SUMINISTROS, JSON.stringify(data))
+      }).catch(() => {}),
     ]).then(([s, u]) => {
-      setSedes(s.filter((x) => x.activa))
-      setTodasUnidades(u)
-      if (sedeIds.size === 0 && s.length === 1) {
-        const initial = new Set([s[0].id])
+      setSedes((s as Sede[]).filter((x) => x.activa))
+      setTodasUnidades(u as UnidadEstado[])
+      if (sedeIds.size === 0 && (s as Sede[]).length === 1) {
+        const initial = new Set([(s as Sede[])[0].id])
         setSedeIds(initial)
         localStorage.setItem('sede_ids', JSON.stringify([...initial]))
       }
