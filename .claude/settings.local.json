@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(ls:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npm install:*)",
+      "Bash(cmd /c \"cd \\\\\"D:\\\\Michael\\\\Electroinova\\\\Desarrollos app\\\\InovInfoWeb\\\\web\\\\\" && npm install -D vite-plugin-pwa\" 2>&1)"
     ]
   }
 }

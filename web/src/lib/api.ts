@@ -66,4 +66,8 @@ export const api = {
   }),
 }
 
+export function isOnline(): boolean {
+  return navigator.onLine
+}
+
 export { ApiError }

@@ -8,6 +8,7 @@ import Historial from './pages/Historial'
 import Pendientes from './pages/Pendientes'
 import Perfil from './pages/Perfil'
 import Admin from './pages/Admin'
+import OfflineSync from './components/OfflineSync'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { usuario, loading } = useAuth()
@@ -24,6 +25,8 @@ export default function App() {
   }
 
   return (
+    <>
+    <OfflineSync />
     <Routes>
       <Route path="/login" element={usuario ? <Navigate to="/" replace /> : <Login />} />
       <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
@@ -36,5 +39,6 @@ export default function App() {
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   )
 }

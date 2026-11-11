@@ -4,8 +4,14 @@ import { api, ApiError } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { construirObservacion, generarHallazgoAutomatico } from '../lib/observacion'
 import { procesarFoto, MAX_FOTOS_TOTAL } from '../lib/fotos'
+import { saveOffline } from '../lib/offlineQueue'
 import type { Unidad, Sede, EstadoVisita, Suministro, Checklist, Visita as VisitaType, Seguimiento, SuministroReciente } from '../types'
 import './Visita.css'
+
+// Claves de localStorage para caché de catálogos offline
+const LS_SEDES = 'cache_sedes'
+const LS_ESTADOS = 'cache_estados'
+const LS_SUMINISTROS = 'cache_suministros'
 
 // Qué secciones se muestran por estado
 const SECCIONES: Record<string, Record<string, boolean>> = {
@@ -125,20 +131,43 @@ export default function Visita() {
   const [fotoProgress, setFotoProgress] = useState<{ current: number; total: number; failed: string[] } | null>(null)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
+  const [savedMsg, setSavedMsg] = useState('')
 
   const sedeNombre = state?.sedeNombre || ''
 
-  // Carga catálogos y datos previos de la unidad
+  // Carga catálogos y datos previos de la unidad.
+  // Si hay conexión: obtiene los datos y los persiste en localStorage.
+  // Si no hay conexión: usa el caché de localStorage.
   useEffect(() => {
     const uid = Number(unidadId)
+
+    // Función auxiliar para parsear JSON del localStorage con fallback
+    function lsParse<T>(key: string): T | null {
+      try {
+        const raw = localStorage.getItem(key)
+        return raw ? (JSON.parse(raw) as T) : null
+      } catch {
+        return null
+      }
+    }
+
     Promise.all([
-      api.get<Sede[]>('/catalogos/sedes'),
-      api.get<EstadoVisita[]>('/catalogos/estados'),
-      api.get<Suministro[]>('/catalogos/suministros'),
-      !unidad ? api.get<Unidad[]>('/catalogos/unidades') : Promise.resolve(null),
-      api.get<VisitaType[]>('/visitas', { unidad_id: String(uid) }),
+      api.get<Sede[]>('/catalogos/sedes').then((data) => {
+        localStorage.setItem(LS_SEDES, JSON.stringify(data))
+        return data
+      }).catch(() => lsParse<Sede[]>(LS_SEDES) ?? ([] as Sede[])),
+      api.get<EstadoVisita[]>('/catalogos/estados').then((data) => {
+        localStorage.setItem(LS_ESTADOS, JSON.stringify(data))
+        return data
+      }).catch(() => lsParse<EstadoVisita[]>(LS_ESTADOS) ?? ([] as EstadoVisita[])),
+      api.get<Suministro[]>('/catalogos/suministros').then((data) => {
+        localStorage.setItem(LS_SUMINISTROS, JSON.stringify(data))
+        return data
+      }).catch(() => lsParse<Suministro[]>(LS_SUMINISTROS) ?? ([] as Suministro[])),
+      !unidad ? api.get<Unidad[]>('/catalogos/unidades').catch(() => null) : Promise.resolve(null),
+      api.get<VisitaType[]>('/visitas', { unidad_id: String(uid) }).catch(() => [] as VisitaType[]),
       // v2: load open seguimientos
-      api.get<Seguimiento[]>('/seguimientos', { unidad_id: String(uid), estado: 'abierto' }),
+      api.get<Seguimiento[]>('/seguimientos', { unidad_id: String(uid), estado: 'abierto' }).catch(() => [] as Seguimiento[]),
       // v2: load recent supplies (non-blocking)
       api.get<SuministroReciente[]>(`/unidades/${uid}/suministros-recientes`, { meses: '6' }).catch(() => [] as SuministroReciente[]),
     ]).then(([s, e, sum, uArr, visitas, segs, sumRec]) => {
@@ -413,9 +442,77 @@ export default function Visita() {
       setSaved(true)
       setTimeout(() => navigate('/', { replace: true }), 1500)
     } catch (err) {
-      if (err instanceof ApiError) setError(err.message)
-      else setError('Error al guardar la visita')
-      setSaving(false)
+      // Si es un error de red (sin conexión), guardar en la cola offline
+      const esErrorRed = err instanceof TypeError || !navigator.onLine
+      if (esErrorRed) {
+        try {
+          const obs = showObsPreview ? obsEditada : observacionAuto
+          const checklist: Checklist | null = secciones.checklist ? { camaras, equipos } : null
+          const hallazgoFinal = secciones.hallazgo
+            ? (hallazgo.trim() || generarHallazgoAutomatico(checklist))
+            : null
+
+          const bodyOffline: Record<string, unknown> = {
+            unidad_id: Number(unidadId),
+            estado_id: estadoId,
+            observacion_estructurada: obs || null,
+            novedad_texto: hallazgoFinal || null,
+            sede_id: sedeId,
+            base_id: null,
+            es_extraordinaria: esExtraordinaria,
+            es_otra_sede: esOtraSede,
+            requiere_seguimiento: false,
+            fecha_seguimiento: null,
+            nota_seguimiento: null,
+            suministros: secciones.suministros
+              ? suministros.map((s) => ({ suministro_id: s.suministro_id, cantidad: s.cantidad }))
+              : [],
+          }
+
+          if (secciones.grabacion) {
+            if (atrasoMin) bodyOffline.atraso_hora_min = Number(atrasoMin)
+            if (diasGrabacion) bodyOffline.dias_grabacion = Number(diasGrabacion)
+            bodyOffline.h264_plus = h264Plus
+          }
+
+          if (checklist) bodyOffline.checklist = checklist
+
+          if (hacerSeguimiento || estadoNombre === 'Pendiente') {
+            bodyOffline.seguimiento = {
+              nota: notaSeguimiento.trim(),
+              fecha_recordatorio: fechaRecordatorio || null,
+            }
+          }
+
+          if (seguimientoDecisiones.length > 0) {
+            bodyOffline.seguimientos_revisados = seguimientoDecisiones
+              .filter((d) => d.solucionado !== null)
+              .map((d) => ({
+                id: d.id,
+                solucionado: d.solucionado,
+                comentario: d.comentario || null,
+              }))
+          }
+
+          // Convertir fotos a Blob para almacenar en IndexedDB
+          const fotosOffline = [...fotosAntes, ...fotosDespues].map((f) => ({
+            blob: f.file as Blob,
+            tipo: f.tipo as 'antes' | 'despues',
+          }))
+
+          await saveOffline(bodyOffline, fotosOffline)
+          setSavedMsg('Visita guardada localmente — se sincronizará cuando haya conexión')
+          setSaved(true)
+          setTimeout(() => navigate('/', { replace: true }), 2500)
+        } catch {
+          setError('Error al guardar la visita localmente')
+          setSaving(false)
+        }
+      } else {
+        if (err instanceof ApiError) setError(err.message)
+        else setError('Error al guardar la visita')
+        setSaving(false)
+      }
     }
   }
 
@@ -447,7 +544,9 @@ export default function Visita() {
       <div className="page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingTop: 80, gap: 16 }}>
         <div style={{ fontSize: '3rem' }}>✓</div>
         <h2>Visita guardada</h2>
-        <p style={{ color: 'var(--text-secondary)' }}>Redirigiendo...</p>
+        <p style={{ color: 'var(--text-secondary)' }}>
+          {savedMsg || 'Redirigiendo...'}
+        </p>
       </div>
     )
   }
