@@ -100,7 +100,7 @@ router.post('/redactar', async (req, res) => {
 
         const payload = JSON.stringify({
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.3, maxOutputTokens: 500 },
+            generationConfig: { temperature: 0.3, maxOutputTokens: 2048 },
         });
 
         const data = await new Promise((resolve, reject) => {
@@ -128,8 +128,10 @@ router.post('/redactar', async (req, res) => {
             httpReq.end();
         });
 
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        console.log('Gemini raw continuation:', JSON.stringify(text));
+        const candidate = data?.candidates?.[0];
+        const finishReason = candidate?.finishReason;
+        const text = candidate?.content?.parts?.[0]?.text;
+        console.log('Gemini finishReason:', finishReason, '| raw:', JSON.stringify(text));
 
         if (!text) {
             console.error('Gemini data:', JSON.stringify(data));
