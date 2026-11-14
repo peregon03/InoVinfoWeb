@@ -134,13 +134,16 @@ router.post('/redactar', async (req, res) => {
         });
 
         const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        console.log('Gemini raw response:', JSON.stringify(text));
 
         if (!text) {
+            console.error('Gemini data:', JSON.stringify(data));
             return res.status(502).json({ error: 'Respuesta vacía del servicio de IA' });
         }
 
         // Clean up: remove quotes, extra whitespace
         const cleaned = text.replace(/^["']|["']$/g, '').trim();
+        console.log('Gemini cleaned:', cleaned);
         res.json({ observacion: cleaned });
 
     } catch (err) {
