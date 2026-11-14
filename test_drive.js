@@ -1,5 +1,18 @@
-require('dotenv').config({ path: require('path').join(__dirname, 'backend/.env') });
-const { google } = require('googleapis');
+// Leer .env manualmente sin depender de dotenv
+const fs = require('fs');
+const path = require('path');
+const envPath = path.join(__dirname, 'backend/.env');
+if (fs.existsSync(envPath)) {
+  fs.readFileSync(envPath, 'utf8').split('\n').forEach(line => {
+    const m = line.match(/^([^#=]+)=(.*)$/);
+    if (m && !process.env[m[1].trim()]) process.env[m[1].trim()] = m[2].trim();
+  });
+}
+// googleapis desde node_modules del backend de produccion
+let google;
+try { google = require('googleapis').google; } catch {
+  google = require(path.join('/home/ubuntu/InovInfo/backend/node_modules/googleapis')).google;
+}
 
 const id = process.env.GOOGLE_OAUTH_CLIENT_ID;
 const secret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
@@ -9,7 +22,8 @@ console.log('Client ID:', id ? id.slice(0, 20) + '...' : 'FALTA');
 console.log('Client Secret:', secret ? secret.slice(0, 10) + '...' : 'FALTA');
 console.log('Refresh Token:', token ? token.slice(0, 20) + '...' : 'FALTA');
 
-const oauth2 = new google.auth.OAuth2(id, secret);
+const OAuth2 = google.auth.OAuth2;
+const oauth2 = new OAuth2(id, secret);
 oauth2.setCredentials({ refresh_token: token });
 
 async function test() {
