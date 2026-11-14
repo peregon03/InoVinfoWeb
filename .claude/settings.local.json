@@ -4,7 +4,8 @@
       "Bash(ls:*)",
       "Bash(npx tsc:*)",
       "Bash(npm install:*)",
-      "Bash(cmd /c \"cd \\\\\"D:\\\\Michael\\\\Electroinova\\\\Desarrollos app\\\\InovInfoWeb\\\\web\\\\\" && npm install -D vite-plugin-pwa\" 2>&1)"
+      "Bash(cmd /c \"cd \\\\\"D:\\\\Michael\\\\Electroinova\\\\Desarrollos app\\\\InovInfoWeb\\\\web\\\\\" && npm install -D vite-plugin-pwa\" 2>&1)",
+      "Bash(find 'D:\\\\Michael\\\\Electroinova\\\\Desarrollos app\\\\InovInfoWeb' -name db* -o -name database* -o -name .env*)"
     ]
   }
 }

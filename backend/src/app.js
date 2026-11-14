@@ -1,3 +1,6 @@
+// Timezone Node.js = Colombia (debe ir ANTES de todo para que Date() use hora local correcta)
+process.env.TZ = 'America/Bogota';
+
 const express  = require('express');
 const cors     = require('cors');
 const path     = require('path');
