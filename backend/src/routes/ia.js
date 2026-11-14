@@ -29,57 +29,52 @@ function formatChecklist(checklist) {
 }
 
 function buildPrompt({ unidad_numero, estado, suministros, descripcion, checklist }) {
-    return `Eres el redactor técnico de Electroinova SAS. Redactas informes de mantenimiento de DVR Móvil para el cliente Veolia.
+    // Solo pedimos a Gemini la CONTINUACIÓN después del texto base.
+    // El texto base se concatena en el backend para evitar que Gemini lo trunque.
+    return `Eres el redactor técnico de Electroinova SAS. Redactas la continuación de informes de mantenimiento de DVR Móvil para Veolia.
 
-TEXTO BASE OBLIGATORIO (siempre inicia con esto cuando el estado es OK o Con novedad):
+El informe SIEMPRE comienza con este texto (NO lo incluyas en tu respuesta, ya está agregado):
 "${TEXTO_BASE}"
 
-REGLAS DE REDACCIÓN:
-1. Escribe en tercera persona y tiempo pasado.
-2. Tono formal y técnico, sin tutear ni saludar.
-3. Máximo 2-3 oraciones después del texto base.
-4. No uses viñetas, listas, títulos ni saltos de línea. Todo debe ser un párrafo continuo.
-5. Si el estado es "OK" y no hay novedad, devuelve SOLO el texto base.
-6. Si hay novedad, agrega "durante la inspección" seguido de lo que encontró el técnico, redactado profesionalmente.
-7. Si se usaron suministros, menciónalos como "se realizó cambio de [suministro]".
-8. No inventes información que no esté en los datos.
-9. No repitas el número de unidad en el texto.
-10. No agregues recomendaciones, solo describe lo que se hizo y encontró.
-11. No uses comillas en la respuesta.
-12. Devuelve SOLO el texto de la observación, sin explicaciones ni comentarios adicionales.
+Tu tarea: redacta SOLO la continuación que va DESPUÉS de ese texto base. Responde ÚNICAMENTE con la frase de continuación.
+
+REGLAS:
+1. Tercera persona, tiempo pasado, tono formal técnico.
+2. Máximo 1-2 oraciones. Un solo párrafo, sin viñetas ni saltos de línea.
+3. Si el estado es "OK" y no hay novedad, responde exactamente: SOLO_BASE
+4. Si hay novedad, inicia con ", durante la inspección" seguido de lo encontrado.
+5. Si se usaron suministros, menciónalos como "se realizó cambio de [suministro]".
+6. No inventes datos. No repitas el número de unidad. No uses comillas.
+7. No agregues recomendaciones, solo lo que se hizo y encontró.
 
 GLOSARIO (reemplaza jerga por término formal):
-- "unidad de almacenamiento averiada" → "Falla en la unidad de almacenamiento"
-- "cámara dañada" → "Falla en la cámara"
-- "no graba" → "El equipo no realiza grabación"
-- "se ve borroso" → "Se evidencia deficiencia en la calidad de imagen"
-- "cables sueltos" → "Conexiones sueltas"
-- "cables cruzados" → "Inversión de conexiones"
-- "no enciende" → "El equipo no presenta encendido"
-- "pantalla rota" → "Daño en la pantalla del monitor"
-- "sin señal" → "Ausencia de señal"
-- "memoria llena" → "Capacidad de almacenamiento agotada"
-- "se reinicia solo" → "El equipo presenta reinicios intermitentes"
-- "está lento" → "Se evidencia lentitud en el sistema"
+- "cámara dañada" → "falla en la cámara"
+- "no graba" → "el equipo no realiza grabación"
+- "se ve borroso" → "deficiencia en la calidad de imagen"
+- "cables sueltos" → "conexiones sueltas"
+- "no enciende" → "el equipo no presenta encendido"
+- "pantalla rota" → "daño en la pantalla del monitor"
+- "sin señal" → "ausencia de señal"
+- "memoria llena" → "capacidad de almacenamiento agotada"
+- "se reinicia solo" → "el equipo presenta reinicios intermitentes"
 
 EJEMPLOS:
 Entrada: "la camara trasera no sirve y el gps esta malo"
-Salida: "${TEXTO_BASE}, durante la inspección se evidenció falla en la cámara trasera y falla en el módulo GPS"
+Respuesta: , durante la inspección se evidenció falla en la cámara trasera y falla en el módulo GPS
 
 Entrada: "se cambio disco duro porque no grababa"
-Salida: "${TEXTO_BASE}, durante la inspección se evidenció que el equipo no realizaba grabación, por lo cual se realizó cambio de disco duro"
+Respuesta: , durante la inspección se evidenció que el equipo no realizaba grabación, por lo cual se realizó cambio de disco duro
 
 Entrada: "todo bien"
-Salida: "${TEXTO_BASE}"
+Respuesta: SOLO_BASE
 
 DATOS DE ESTA VISITA:
-- Unidad: ${unidad_numero}
-- Estado reportado: ${estado}
-- Checklist de equipos: ${formatChecklist(checklist)}
-- Suministros utilizados: ${suministros || 'Ninguno'}
+- Estado: ${estado}
+- Checklist: ${formatChecklist(checklist)}
+- Suministros: ${suministros || 'Ninguno'}
 - Descripción del técnico: "${descripcion}"
 
-Devuelve SOLO el texto de la observación.`;
+Responde SOLO la continuación (o SOLO_BASE si no hay novedad).`;
 }
 
 // POST /api/ia/redactar
@@ -134,17 +129,27 @@ router.post('/redactar', async (req, res) => {
         });
 
         const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        console.log('Gemini raw response:', JSON.stringify(text));
+        console.log('Gemini raw continuation:', JSON.stringify(text));
 
         if (!text) {
             console.error('Gemini data:', JSON.stringify(data));
             return res.status(502).json({ error: 'Respuesta vacía del servicio de IA' });
         }
 
-        // Clean up: remove quotes, extra whitespace
         const cleaned = text.replace(/^["']|["']$/g, '').trim();
-        console.log('Gemini cleaned:', cleaned);
-        res.json({ observacion: cleaned });
+
+        // Si Gemini dice SOLO_BASE o la respuesta está vacía, devolver solo el texto base
+        let observacion;
+        if (cleaned === 'SOLO_BASE' || !cleaned) {
+            observacion = TEXTO_BASE;
+        } else {
+            // La continuación puede empezar con ", durante..." o con texto directo
+            const continuacion = cleaned.startsWith(',') ? cleaned : ', ' + cleaned;
+            observacion = TEXTO_BASE + continuacion;
+        }
+
+        console.log('Observacion final:', observacion);
+        res.json({ observacion });
 
     } catch (err) {
         console.error('Error en POST /api/ia/redactar:', err.message);
