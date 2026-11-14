@@ -23,17 +23,34 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // iOS Safari necesita denylist explícito para no interceptar /api
         navigateFallback: 'index.html',
-        globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+        navigateFallbackDenylist: [/^\/api/],
+        globPatterns: ['**/*.{js,css,html,svg,woff2,json}'],
+        // Incluir manifest.webmanifest en el precache
+        additionalManifestEntries: [],
         runtimeCaching: [
           {
+            // Cache catálogos — funciona offline
             urlPattern: /\/api\/catalogos\/.*/,
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'catalogos-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 7 * 24 * 60 * 60, // 7 días
+                maxAgeSeconds: 7 * 24 * 60 * 60,
+              },
+            },
+          },
+          {
+            // Cache estado de unidades — para NuevaVisita offline
+            urlPattern: /\/api\/unidades\/estado/,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'unidades-cache',
+              expiration: {
+                maxEntries: 5,
+                maxAgeSeconds: 24 * 60 * 60,
               },
             },
           },

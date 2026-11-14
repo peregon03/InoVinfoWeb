@@ -1,28 +1,42 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { getPending, removePending, countPending } from '../lib/offlineQueue'
 import { procesarFoto } from '../lib/fotos'
 
-type SyncState = 'idle' | 'syncing' | 'error'
+type SyncState = 'idle' | 'offline' | 'syncing' | 'error'
+
+// Verifica conexión real haciendo un HEAD al health endpoint
+// navigator.onLine no es confiable en iOS Safari
+async function checkRealConnection(): Promise<boolean> {
+  try {
+    const res = await fetch('/health', { method: 'HEAD', cache: 'no-store' })
+    return res.ok
+  } catch {
+    return false
+  }
+}
 
 export default function OfflineSync() {
-  const [online, setOnline] = useState(navigator.onLine)
   const [syncState, setSyncState] = useState<SyncState>('idle')
   const [pendingCount, setPendingCount] = useState(0)
   const [syncMsg, setSyncMsg] = useState('')
+  const syncingRef = useRef(false)
 
-  // Refresca el contador al montar y cuando cambia el estado online
   const refreshCount = useCallback(async () => {
     try {
       const n = await countPending()
       setPendingCount(n)
+      return n
     } catch {
-      // IndexedDB puede no estar disponible en contextos muy restringidos
+      return 0
     }
   }, [])
 
   const sincronizar = useCallback(async () => {
+    if (syncingRef.current) return
+    syncingRef.current = true
+
     const pendientes = await getPending()
-    if (pendientes.length === 0) return
+    if (pendientes.length === 0) { syncingRef.current = false; return }
 
     setSyncState('syncing')
     setSyncMsg(`Sincronizando ${pendientes.length} visita(s)...`)
@@ -35,7 +49,6 @@ export default function OfflineSync() {
 
     for (const visita of pendientes) {
       try {
-        // POST de la visita
         const res = await fetch('/api/visitas', {
           method: 'POST',
           headers: { ...headers, 'Content-Type': 'application/json' },
@@ -43,18 +56,15 @@ export default function OfflineSync() {
         })
 
         if (!res.ok) {
-          // Error de servidor: no es problema de red, mantener en cola
           errores++
           continue
         }
 
         const data = await res.json() as { id: number }
 
-        // Subir fotos una a una
+        // Subir fotos
         for (let i = 0; i < visita.fotos.length; i++) {
           try {
-            // procesarFoto espera un File, pero tenemos un Blob almacenado.
-            // Convertimos a File para compatibilidad con la función existente.
             const fotoBlob = visita.fotos[i].blob
             const fotoFile = new File([fotoBlob], `foto_${i}.jpg`, { type: fotoBlob.type || 'image/jpeg' })
             const unidadNum = String((visita.body as Record<string, unknown>).unidad_id || '')
@@ -68,88 +78,81 @@ export default function OfflineSync() {
               body: fd,
             })
           } catch {
-            // Foto individual falla: continúa con las demás
+            // Foto falla: no bloquear
           }
         }
 
         await removePending(visita.id)
       } catch {
-        // Error de red durante sync: dejar para el próximo intento
         errores++
       }
     }
 
-    await refreshCount()
-    const restantes = await countPending()
-
+    const restantes = await refreshCount()
     if (errores > 0 && restantes > 0) {
       setSyncState('error')
-      setSyncMsg(`${errores} visita(s) no se pudieron sincronizar. Se reintentará cuando haya conexión.`)
+      setSyncMsg(`${errores} visita(s) no se pudieron sincronizar`)
     } else {
       setSyncState('idle')
       setSyncMsg('')
     }
+    syncingRef.current = false
   }, [refreshCount])
 
+  // Verificar conexión y sincronizar periódicamente
   useEffect(() => {
     refreshCount()
 
-    function handleOnline() {
-      setOnline(true)
-      refreshCount().then(async () => {
-        const n = await countPending()
-        if (n > 0) sincronizar()
-      })
+    async function checkAndSync() {
+      const n = await refreshCount()
+      if (n > 0) {
+        const online = await checkRealConnection()
+        if (online) {
+          setSyncState('idle')
+          sincronizar()
+        } else {
+          setSyncState('offline')
+        }
+      } else {
+        // Sin pendientes: solo verificar estado para el banner
+        const online = await checkRealConnection()
+        setSyncState(online ? 'idle' : 'offline')
+      }
     }
 
-    function handleOffline() {
-      setOnline(false)
-      setSyncState('idle')
-      setSyncMsg('')
-    }
+    // Verificar al montar
+    checkAndSync()
 
+    // Escuchar eventos (como complemento, no como fuente principal)
+    function handleOnline() { checkAndSync() }
+    function handleOffline() { setSyncState('offline') }
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
+
+    // Polling cada 30 segundos — más confiable que eventos en iOS
+    const interval = setInterval(checkAndSync, 30000)
+
     return () => {
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
+      clearInterval(interval)
     }
   }, [refreshCount, sincronizar])
 
-  // Sin conexión: mostrar banner
-  if (!online) {
-    return (
-      <div style={styles.bannerOffline}>
-        Sin conexión
-      </div>
-    )
+  if (syncState === 'offline') {
+    return <div style={styles.bannerOffline}>Sin conexión{pendingCount > 0 ? ` · ${pendingCount} visita(s) pendiente(s)` : ''}</div>
   }
 
-  // Con conexión y sincronizando
   if (syncState === 'syncing') {
-    return (
-      <div style={styles.bannerSyncing}>
-        {syncMsg}
-      </div>
-    )
+    return <div style={styles.bannerSyncing}>{syncMsg}</div>
   }
 
-  // Con conexión, error en sync
   if (syncState === 'error') {
-    return (
-      <div style={styles.bannerError}>
-        {syncMsg}
-      </div>
-    )
+    return <div style={styles.bannerError}>{syncMsg}</div>
   }
 
-  // Con conexión y visitas pendientes (aún no se intentó sincronizar)
   if (pendingCount > 0) {
-    return (
-      <div style={styles.bannerSyncing}>
-        {pendingCount} visita(s) pendiente(s) de sincronizar
-      </div>
-    )
+    return <div style={styles.bannerSyncing}>{pendingCount} visita(s) pendiente(s) de sincronizar</div>
   }
 
   return null

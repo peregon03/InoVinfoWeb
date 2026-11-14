@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
-import { api, ApiError } from '../lib/api'
+import { api, ApiError, NetworkError } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { construirObservacion, generarHallazgoAutomatico } from '../lib/observacion'
 import { procesarFoto, MAX_FOTOS_TOTAL } from '../lib/fotos'
@@ -443,7 +443,7 @@ export default function Visita() {
       setTimeout(() => navigate('/', { replace: true }), 1500)
     } catch (err) {
       // Si es un error de red (sin conexión), guardar en la cola offline
-      const esErrorRed = err instanceof TypeError || !navigator.onLine
+      const esErrorRed = err instanceof NetworkError
       if (esErrorRed) {
         try {
           const obs = showObsPreview ? obsEditada : observacionAuto

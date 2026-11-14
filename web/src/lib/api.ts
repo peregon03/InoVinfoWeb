@@ -2,6 +2,7 @@ const BASE = '/api'
 
 interface ApiOptions extends RequestInit {
   params?: Record<string, string>
+  timeout?: number
 }
 
 class ApiError extends Error {
@@ -11,12 +12,20 @@ class ApiError extends Error {
   }
 }
 
+// Error específico de red — diferenciado de errores de servidor
+export class NetworkError extends Error {
+  constructor() {
+    super('Sin conexión a internet')
+    this.name = 'NetworkError'
+  }
+}
+
 function getToken(): string | null {
   return localStorage.getItem('token')
 }
 
 async function request<T>(path: string, opts: ApiOptions = {}): Promise<T> {
-  const { params, ...fetchOpts } = opts
+  const { params, timeout = 15000, ...fetchOpts } = opts
   let url = `${BASE}${path}`
   if (params) {
     const qs = new URLSearchParams(params).toString()
@@ -31,7 +40,23 @@ async function request<T>(path: string, opts: ApiOptions = {}): Promise<T> {
     headers['Content-Type'] = 'application/json'
   }
 
-  const res = await fetch(url, { ...fetchOpts, headers: { ...headers, ...fetchOpts.headers as Record<string, string> } })
+  // Timeout con AbortController — iOS Safari puede dejar fetch colgado sin red
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeout)
+
+  let res: Response
+  try {
+    res = await fetch(url, {
+      ...fetchOpts,
+      headers: { ...headers, ...fetchOpts.headers as Record<string, string> },
+      signal: controller.signal,
+    })
+  } catch (err) {
+    clearTimeout(timer)
+    // TypeError = falla de red, AbortError = timeout
+    throw new NetworkError()
+  }
+  clearTimeout(timer)
 
   if (res.status === 401) {
     localStorage.removeItem('token')
@@ -63,11 +88,8 @@ export const api = {
   upload: <T>(path: string, formData: FormData) => request<T>(path, {
     method: 'POST',
     body: formData,
+    timeout: 60000, // 60s para fotos
   }),
-}
-
-export function isOnline(): boolean {
-  return navigator.onLine
 }
 
 export { ApiError }
