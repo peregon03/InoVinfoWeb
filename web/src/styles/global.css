@@ -281,3 +281,31 @@ select {
     font-size: 1.1rem;
   }
 }
+
+/* Spinner pequeño (usado en botones) */
+.spinner-sm {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+/* ── Modal genérico (usado en Visita y NuevaVisita) ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: var(--gap);
+}
+
+.modal-content {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 14px;
+  padding: 20px;
+  max-width: 400px;
+  width: 100%;
+}

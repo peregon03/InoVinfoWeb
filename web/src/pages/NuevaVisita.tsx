@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { api } from '../lib/api'
+import { api, ApiError } from '../lib/api'
+import { useAuth } from '../context/AuthContext'
 import type { Sede, UnidadEstado, EstadoVisita, Suministro } from '../types'
 import './NuevaVisita.css'
 
@@ -58,8 +59,18 @@ function clasificar(u: UnidadEstado): FiltroKey {
   return 'otras'
 }
 
+// Tipos locales para el modal de gestión de unidades
+type ModalModo = 'crear' | 'editar'
+interface ModalUnidad {
+  modo: ModalModo
+  unidadId?: number
+  numero: string
+  sedeId: number | ''
+}
+
 export default function NuevaVisita() {
   const navigate = useNavigate()
+  const { isCoordinadora } = useAuth()
   const [sedes, setSedes] = useState<Sede[]>([])
   const [sedeIds, setSedeIds] = useState<Set<number>>(() => {
     const saved = localStorage.getItem('sede_ids')
@@ -73,6 +84,16 @@ export default function NuevaVisita() {
   const [busqueda, setBusqueda] = useState('')
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Estado del modal de gestión de unidades (coordinadora)
+  const [modal, setModal] = useState<ModalUnidad | null>(null)
+  const [modalGuardando, setModalGuardando] = useState(false)
+  const [modalError, setModalError] = useState('')
+
+  // Modal de confirmación de eliminación
+  const [confirmarEliminar, setConfirmarEliminar] = useState<{ id: number; numero: string } | null>(null)
+  const [eliminando, setEliminando] = useState(false)
+  const [mensajeAccion, setMensajeAccion] = useState('')
 
   useEffect(() => {
     Promise.all([
@@ -167,6 +188,95 @@ export default function NuevaVisita() {
     setExpandedId(null)
   }
 
+  // Recarga la lista de unidades desde el servidor
+  async function recargarUnidades() {
+    try {
+      const data = await api.get<UnidadEstado[]>('/unidades/estado', { dias: '15' })
+      localStorage.setItem(LS_UNIDADES_ESTADO, JSON.stringify(data))
+      setTodasUnidades(data)
+    } catch {
+      // Si falla, mantener la lista actual
+    }
+  }
+
+  // Abre el modal para crear una nueva unidad
+  function abrirCrear() {
+    // Preseleccionar la primera sede activa seleccionada si hay exactamente una
+    const sedePreseleccionada = sedeIds.size === 1 ? [...sedeIds][0] : ''
+    setModal({ modo: 'crear', numero: '', sedeId: sedePreseleccionada })
+    setModalError('')
+  }
+
+  // Abre el modal para editar una unidad existente
+  function abrirEditar(u: UnidadEstado) {
+    setModal({
+      modo: 'editar',
+      unidadId: u.unidad_id,
+      numero: u.numero,
+      sedeId: u.sede_id ?? '',
+    })
+    setModalError('')
+    setExpandedId(null)
+  }
+
+  // Guarda (crear o editar) la unidad desde el modal
+  async function guardarModal() {
+    if (!modal) return
+    if (!modal.numero.trim()) {
+      setModalError('El número de unidad es obligatorio')
+      return
+    }
+
+    setModalGuardando(true)
+    setModalError('')
+
+    try {
+      const body = {
+        numero: modal.numero.trim(),
+        sede_id: modal.sedeId !== '' ? modal.sedeId : null,
+      }
+
+      if (modal.modo === 'crear') {
+        await api.post('/unidades', body)
+        setMensajeAccion(`Unidad "${modal.numero.trim()}" creada correctamente`)
+      } else {
+        await api.put(`/unidades/${modal.unidadId}`, body)
+        setMensajeAccion(`Unidad "${modal.numero.trim()}" actualizada correctamente`)
+      }
+
+      setModal(null)
+      await recargarUnidades()
+      setTimeout(() => setMensajeAccion(''), 3000)
+    } catch (err) {
+      setModalError(err instanceof ApiError ? err.message : 'Error al guardar la unidad')
+    } finally {
+      setModalGuardando(false)
+    }
+  }
+
+  // Elimina o desactiva una unidad
+  async function eliminarUnidad() {
+    if (!confirmarEliminar) return
+    setEliminando(true)
+
+    try {
+      const resp = await api.delete<{ eliminada: boolean; desactivada: boolean; mensaje: string }>(
+        `/unidades/${confirmarEliminar.id}`
+      )
+      setConfirmarEliminar(null)
+      setExpandedId(null)
+      setMensajeAccion(resp.mensaje)
+      await recargarUnidades()
+      setTimeout(() => setMensajeAccion(''), 4000)
+    } catch (err) {
+      setMensajeAccion(err instanceof ApiError ? err.message : 'Error al eliminar la unidad')
+      setConfirmarEliminar(null)
+      setTimeout(() => setMensajeAccion(''), 4000)
+    } finally {
+      setEliminando(false)
+    }
+  }
+
   if (loading) {
     return <div className="page" style={{ display: 'flex', justifyContent: 'center', paddingTop: 60 }}><div className="spinner" /></div>
   }
@@ -175,9 +285,21 @@ export default function NuevaVisita() {
     <div className="page">
       <h1 className="page-title">Nueva Visita</h1>
 
+      {/* Mensaje de acción (creación, edición, eliminación) */}
+      {mensajeAccion && (
+        <div className="alert alert-success" style={{ marginBottom: 12 }}>{mensajeAccion}</div>
+      )}
+
       {/* Base selector — multi-select */}
       <div className="card nv-base-card">
-        <span className="card-title">Base operativa</span>
+        <div className="nv-base-header">
+          <span className="card-title">Base operativa</span>
+          {isCoordinadora && (
+            <button className="btn btn-outline nv-btn-agregar-unidad" onClick={abrirCrear}>
+              + Unidad
+            </button>
+          )}
+        </div>
         <div className="nv-base-buttons">
           {sedes.map((s) => (
             <button
@@ -277,6 +399,23 @@ export default function NuevaVisita() {
                         >
                           Revisar
                         </button>
+                        {/* Botones de gestión — solo coordinadora */}
+                        {isCoordinadora && (
+                          <>
+                            <button
+                              className="btn btn-outline nv-mini-editar"
+                              onClick={() => abrirEditar(u)}
+                            >
+                              Editar
+                            </button>
+                            <button
+                              className="btn nv-mini-eliminar"
+                              onClick={() => setConfirmarEliminar({ id: u.unidad_id, numero: u.numero })}
+                            >
+                              Eliminar
+                            </button>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
@@ -287,6 +426,91 @@ export default function NuevaVisita() {
         </>
       ) : (
         <div className="empty-state">Selecciona una o más bases operativas</div>
+      )}
+
+      {/* Modal crear / editar unidad */}
+      {modal && (
+        <div className="modal-overlay" onClick={() => { if (!modalGuardando) setModal(null) }}>
+          <div className="modal-content nv-modal-unidad" onClick={(e) => e.stopPropagation()}>
+            <h3 className="nv-modal-titulo">
+              {modal.modo === 'crear' ? 'Nueva unidad' : 'Editar unidad'}
+            </h3>
+
+            {modalError && (
+              <div className="alert alert-error" style={{ marginBottom: 12 }}>{modalError}</div>
+            )}
+
+            <div className="form-group">
+              <label>Número *</label>
+              <input
+                type="text"
+                value={modal.numero}
+                onChange={(e) => setModal((p) => p ? { ...p, numero: e.target.value } : p)}
+                placeholder="Ej: 1023"
+                autoFocus
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Base operativa</label>
+              <select
+                value={modal.sedeId}
+                onChange={(e) => setModal((p) => p ? { ...p, sedeId: e.target.value ? Number(e.target.value) : '' } : p)}
+              >
+                <option value="">Sin asignar</option>
+                {sedes.map((s) => (
+                  <option key={s.id} value={s.id}>{s.nombre}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="nv-modal-actions">
+              <button
+                className="btn btn-primary"
+                onClick={guardarModal}
+                disabled={modalGuardando}
+              >
+                {modalGuardando ? <span className="spinner spinner-sm" /> : 'Guardar'}
+              </button>
+              <button
+                className="btn btn-outline"
+                onClick={() => setModal(null)}
+                disabled={modalGuardando}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación de eliminación */}
+      {confirmarEliminar && (
+        <div className="modal-overlay" onClick={() => { if (!eliminando) setConfirmarEliminar(null) }}>
+          <div className="modal-content nv-modal-unidad" onClick={(e) => e.stopPropagation()}>
+            <h3 className="nv-modal-titulo">Eliminar unidad</h3>
+            <p style={{ fontSize: '0.9rem', lineHeight: 1.5, marginBottom: 16 }}>
+              ¿Eliminar la unidad <strong>{confirmarEliminar.numero}</strong>?
+              Si tiene visitas registradas, solo se desactivará en lugar de eliminarse.
+            </p>
+            <div className="nv-modal-actions">
+              <button
+                className="btn nv-btn-eliminar-confirmar"
+                onClick={eliminarUnidad}
+                disabled={eliminando}
+              >
+                {eliminando ? <span className="spinner spinner-sm" /> : 'Sí, eliminar'}
+              </button>
+              <button
+                className="btn btn-outline"
+                onClick={() => setConfirmarEliminar(null)}
+                disabled={eliminando}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

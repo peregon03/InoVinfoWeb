@@ -59,6 +59,12 @@ async function request<T>(path: string, opts: ApiOptions = {}): Promise<T> {
   clearTimeout(timer)
 
   if (res.status === 401) {
+    // Login fallido → mostrar mensaje del backend (ej. "Credenciales inválidas")
+    if (path === '/auth/login') {
+      const data = await res.json().catch(() => ({}))
+      throw new ApiError(401, data.error || 'Credenciales inválidas')
+    }
+    // Cualquier otra ruta → sesión expirada, limpiar y redirigir
     localStorage.removeItem('token')
     localStorage.removeItem('usuario')
     window.location.href = '/login'

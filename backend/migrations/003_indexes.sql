@@ -1,0 +1,5 @@
+-- 003_indexes.sql — ARCHIVO OBSOLETO / VACÍO
+-- Este archivo fue renombrado a 004_indexes.sql para evitar conflicto de numeración
+-- con 003_suministros_unique.sql (ambos creados por agentes distintos en paralelo).
+-- Ejecutar 004_indexes.sql en su lugar.
+-- Este archivo no contiene sentencias SQL — es seguro ejecutarlo sin efecto.

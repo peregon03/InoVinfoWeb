@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { api, ApiError, NetworkError } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
@@ -100,6 +100,8 @@ export default function Visita() {
   const [suministros, setSuministros] = useState<SuministroSel[]>([])
   const [showSumSelector, setShowSumSelector] = useState(false)
   const [sumBusqueda, setSumBusqueda] = useState('')
+  const sumSelectorRef = useRef<HTMLDivElement>(null)
+  const sumInputRef = useRef<HTMLInputElement>(null)
 
   // Fotos
   const [fotosAntes, setFotosAntes] = useState<FotoLocal[]>([])
@@ -128,6 +130,7 @@ export default function Visita() {
 
   // Estado del guardado
   const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false)
   const [fotoProgress, setFotoProgress] = useState<{ current: number; total: number; failed: string[] } | null>(null)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
@@ -219,6 +222,30 @@ export default function Visita() {
     }).finally(() => setLoading(false))
   }, [unidadId])
 
+  // Cierra el selector de suministros al hacer click fuera del contenedor
+  const cerrarSumSelector = useCallback(() => {
+    setShowSumSelector(false)
+    setSumBusqueda('')
+  }, [])
+
+  useEffect(() => {
+    if (!showSumSelector) return
+    function handleClickFuera(e: MouseEvent) {
+      if (sumSelectorRef.current && !sumSelectorRef.current.contains(e.target as Node)) {
+        cerrarSumSelector()
+      }
+    }
+    document.addEventListener('mousedown', handleClickFuera)
+    return () => document.removeEventListener('mousedown', handleClickFuera)
+  }, [showSumSelector, cerrarSumSelector])
+
+  // Foco automático en el input al abrir el selector
+  useEffect(() => {
+    if (showSumSelector) {
+      setTimeout(() => sumInputRef.current?.focus(), 50)
+    }
+  }, [showSumSelector])
+
   const secciones = SECCIONES[estadoNombre] || {}
   const totalFotos = fotosAntes.length + fotosDespues.length
 
@@ -263,8 +290,7 @@ export default function Visita() {
   function confirmAddSuministro(s: Suministro, marcado: boolean) {
     if (suministros.find((x) => x.suministro_id === s.id)) return
     setSuministros((p) => [...p, { suministro_id: s.id, nombre: s.nombre, cantidad: 1, cambioReciente: marcado }])
-    setShowSumSelector(false)
-    setSumBusqueda('')
+    cerrarSumSelector()
     setAlertaSuministro(null)
   }
 
@@ -293,6 +319,14 @@ export default function Visita() {
   async function estructurarConIA() {
     const desc = hallazgo.trim()
     if (!desc) return
+
+    // Limpiar estado anterior antes de cada llamada para evitar texto viejo visible
+    setIaResultado('')
+    setObsEditada('')
+    setShowObsPreview(false)
+    setIaUsada(false)
+    setError('')
+
     setIaLoading(true)
     try {
       const sumsTexto = suministros.map((s) => `${s.nombre}${s.cantidad > 1 ? ` x${s.cantidad}` : ''}`).join(', ')
@@ -305,12 +339,16 @@ export default function Visita() {
       })
       setIaResultado(result.observacion)
       setIaUsada(true)
-      // Auto-set as the editable observation
+      // Establece la observación editable con el resultado de IA
       setObsEditada(result.observacion)
       setShowObsPreview(true)
     } catch (err) {
       console.error('Error IA:', err)
-      setError('No se pudo estructurar con IA. Puedes continuar sin ella.')
+      // Limpiar resultado para no dejar texto viejo visible
+      setIaResultado('')
+      setObsEditada('')
+      setShowObsPreview(false)
+      setError(err instanceof ApiError ? err.message : 'No se pudo estructurar con IA. Puedes continuar sin ella.')
     } finally {
       setIaLoading(false)
     }
@@ -350,9 +388,12 @@ export default function Visita() {
   }
 
   async function handleSave() {
+    // Guard contra doble submit — protege tanto el estado React como la ref sincrónica
+    if (savingRef.current) return
     const err = validate()
     if (err) { setError(err); return }
 
+    savingRef.current = true
     setSaving(true)
     setError('')
     setFotoProgress(null)
@@ -364,6 +405,20 @@ export default function Visita() {
       const hallazgoFinal = secciones.hallazgo
         ? (hallazgo.trim() || generarHallazgoAutomatico(checklist))
         : null
+
+      // Deduplicar suministros por suministro_id antes de enviar al servidor
+      const suministrosDedup = secciones.suministros
+        ? Array.from(
+            suministros.reduce((map, s) => {
+              if (map.has(s.suministro_id)) {
+                map.get(s.suministro_id)!.cantidad += s.cantidad
+              } else {
+                map.set(s.suministro_id, { suministro_id: s.suministro_id, cantidad: s.cantidad })
+              }
+              return map
+            }, new Map<number, { suministro_id: number; cantidad: number }>()).values()
+          )
+        : []
 
       const body: Record<string, unknown> = {
         unidad_id: Number(unidadId),
@@ -378,9 +433,7 @@ export default function Visita() {
         requiere_seguimiento: false,
         fecha_seguimiento: null,
         nota_seguimiento: null,
-        suministros: secciones.suministros
-          ? suministros.map((s) => ({ suministro_id: s.suministro_id, cantidad: s.cantidad }))
-          : [],
+        suministros: suministrosDedup,
       }
 
       if (secciones.grabacion) {
@@ -412,28 +465,37 @@ export default function Visita() {
 
       const visita = await api.post<{ id: number }>('/visitas', body)
 
-      // Subida de fotos una a una con progreso
+      // Subida de fotos una a una con reintentos automáticos (hasta 2 intentos extra)
       const allFotos = [...fotosAntes, ...fotosDespues]
       if (allFotos.length > 0) {
         const failed: string[] = []
         setFotoProgress({ current: 0, total: allFotos.length, failed: [] })
 
         for (let i = 0; i < allFotos.length; i++) {
-          try {
-            const blob = await procesarFoto(allFotos[i].file, unidad?.numero || '')
-            const fd = new FormData()
-            fd.append('foto', blob, `foto_${i}.jpg`)
-            fd.append('tipo', allFotos[i].tipo)
-            await api.upload(`/visitas/${visita.id}/fotos`, fd)
-          } catch {
-            failed.push(allFotos[i].preview)
+          let uploaded = false
+          for (let intento = 0; intento <= 2; intento++) {
+            try {
+              const blob = await procesarFoto(allFotos[i].file, unidad?.numero || '')
+              const fd = new FormData()
+              fd.append('foto', blob, `foto_${i}.jpg`)
+              fd.append('tipo', allFotos[i].tipo)
+              await api.upload(`/visitas/${visita.id}/fotos`, fd)
+              uploaded = true
+              break
+            } catch {
+              // Si quedan reintentos, continúa; si no, registra como fallida
+              if (intento === 2) {
+                failed.push(allFotos[i].preview)
+              }
+            }
           }
-          setFotoProgress({ current: i + 1, total: allFotos.length, failed })
+          setFotoProgress({ current: i + 1, total: allFotos.length, failed: uploaded ? failed : [...failed] })
         }
 
         if (failed.length > 0) {
           setFotoProgress((p) => p ? { ...p, failed } : null)
           setError(`La visita se guardó pero ${failed.length} foto(s) fallaron. Puedes reintentar.`)
+          savingRef.current = false
           setSaving(false)
           return
         }
@@ -506,11 +568,13 @@ export default function Visita() {
           setTimeout(() => navigate('/', { replace: true }), 2500)
         } catch {
           setError('Error al guardar la visita localmente')
+          savingRef.current = false
           setSaving(false)
         }
       } else {
         if (err instanceof ApiError) setError(err.message)
         else setError('Error al guardar la visita')
+        savingRef.current = false
         setSaving(false)
       }
     }
@@ -845,21 +909,25 @@ export default function Visita() {
             </div>
           ))}
           {showSumSelector ? (
-            <div className="sum-selector">
+            <div className="sum-selector" ref={sumSelectorRef}>
               <input
+                ref={sumInputRef}
                 type="text"
                 placeholder="Buscar suministro..."
                 value={sumBusqueda}
                 onChange={(e) => setSumBusqueda(e.target.value)}
-                autoFocus
               />
               <div className="sum-list">
                 {suministrosCat
                   .filter((s) => !suministros.find((x) => x.suministro_id === s.id))
                   .filter((s) => !sumBusqueda || s.nombre.toLowerCase().includes(sumBusqueda.toLowerCase()))
-                  .slice(0, 10)
+                  .slice(0, 12)
                   .map((s) => (
-                    <button key={s.id} className="sum-option" onClick={() => tryAddSuministro(s)}>
+                    <button
+                      key={s.id}
+                      className="sum-option"
+                      onMouseDown={(e) => { e.preventDefault(); tryAddSuministro(s) }}
+                    >
                       {s.nombre}
                     </button>
                   ))}
@@ -867,13 +935,14 @@ export default function Visita() {
                   <button
                     className="sum-option"
                     style={{ color: 'var(--accent)', fontWeight: 600 }}
-                    onClick={async () => {
+                    onMouseDown={async (e) => {
+                      e.preventDefault()
                       try {
                         const nuevo = await api.post<Suministro>('/catalogos/suministros', { nombre: sumBusqueda.trim() })
                         setSuministrosCat((p) => [...p, nuevo])
                         confirmAddSuministro(nuevo, false)
-                      } catch (e) {
-                        setError(e instanceof ApiError ? e.message : 'Error al crear suministro')
+                      } catch (err) {
+                        setError(err instanceof ApiError ? err.message : 'Error al crear suministro')
                       }
                     }}
                   >
@@ -883,7 +952,7 @@ export default function Visita() {
               </div>
               <button
                 className="btn btn-outline"
-                onClick={() => { setShowSumSelector(false); setSumBusqueda('') }}
+                onClick={cerrarSumSelector}
                 style={{ marginTop: 8 }}
               >
                 Cancelar

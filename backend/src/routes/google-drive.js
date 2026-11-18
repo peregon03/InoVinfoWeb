@@ -60,6 +60,7 @@ router.post('/oauth/iniciar', verificarToken, soloCoordinadora, async (req, res)
             prompt:      'consent',
             scope: [
                 'https://www.googleapis.com/auth/drive.file',
+                'https://www.googleapis.com/auth/spreadsheets',
                 'openid',
                 'email',
             ],

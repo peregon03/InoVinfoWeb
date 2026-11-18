@@ -42,13 +42,26 @@ Esto crea: tabla `bases`, tabla `app_config`, estados nuevos, columnas nuevas en
 
 ```bash
 # Archivos NUEVOS (no existen en el backend):
-cp ~/InovInfoWeb/backend/src/routes/bases.js        ~/InovInfo/backend/src/routes/
-cp ~/InovInfoWeb/backend/src/routes/google-drive.js  ~/InovInfo/backend/src/routes/
+cp ~/InovInfoWeb/backend/src/routes/bases.js              ~/InovInfo/backend/src/routes/
+cp ~/InovInfoWeb/backend/src/routes/google-drive.js       ~/InovInfo/backend/src/routes/
+cp ~/InovInfoWeb/backend/src/routes/ia.js                 ~/InovInfo/backend/src/routes/
+cp ~/InovInfoWeb/backend/src/routes/seguimientos.js       ~/InovInfo/backend/src/routes/
+cp ~/InovInfoWeb/backend/src/routes/unidades.js           ~/InovInfo/backend/src/routes/
+cp ~/InovInfoWeb/backend/src/routes/informes.js           ~/InovInfo/backend/src/routes/
 
 # Archivos MODIFICADOS (reemplazan los existentes):
-cp ~/InovInfoWeb/backend/src/app.js                  ~/InovInfo/backend/src/
-cp ~/InovInfoWeb/backend/src/routes/visitas.js       ~/InovInfo/backend/src/routes/
+cp ~/InovInfoWeb/backend/src/app.js                       ~/InovInfo/backend/src/
+cp ~/InovInfoWeb/backend/src/routes/visitas.js            ~/InovInfo/backend/src/routes/
+cp ~/InovInfoWeb/backend/src/config/google.js             ~/InovInfo/backend/src/config/
 ```
+
+> **IMPORTANTE — config/google.js**: La versión del repositorio usa OAuth2 para Sheets
+> (mismo token de Drive). Si el servidor tiene una versión que usa JWT/service account
+> con `GOOGLE_PRIVATE_KEY`, esta nueva versión la reemplaza correctamente: intenta JWT
+> solo si la clave parece válida (comienza con `-----BEGIN`), y hace fallback a OAuth2.
+> Para que OAuth2 tenga acceso a Sheets, el token debe haberse emitido con el scope
+> `spreadsheets`. Tras copiar el nuevo `google-drive.js`, **reconectar Google Drive**
+> desde la pantalla de Admin para obtener un token con el scope correcto.
 
 ### 5. Variables de entorno
 
@@ -101,12 +114,17 @@ curl -X POST https://api.electroinova.com/api/auth/login \
 
 | Archivo | Acción | Qué cambia |
 |---------|--------|------------|
-| `src/app.js` | **Reemplazar** | Agrega rutas `/api/catalogos/bases` y `/api/google`, sirve estáticos de `~/InovInfoWeb/web/dist` |
+| `src/app.js` | **Reemplazar** | Agrega rutas `/api/catalogos/bases`, `/api/google`, `/api/ia`, etc. Sirve estáticos web |
 | `src/routes/visitas.js` | **Reemplazar** | POST acepta campos nuevos, GET devuelve campos nuevos + fotos_detalle, fotos aceptan tipo |
+| `src/config/google.js` | **Reemplazar** | OAuth2 para Drive+Sheets; fallback JWT → OAuth2 cuando clave service account falta/es inválida |
+| `src/routes/google-drive.js` | **Nuevo** | OAuth: iniciar (scope drive+sheets), callback, estado, probar, desconectar |
 | `src/routes/bases.js` | **Nuevo** | CRUD de bases operativas |
-| `src/routes/google-drive.js` | **Nuevo** | OAuth: iniciar, callback, estado, probar, desconectar |
+| `src/routes/ia.js` | **Nuevo** | Redacción con Gemini AI; anti-duplicado TEXTO_BASE |
+| `src/routes/informes.js` | **Nuevo** | Generación de informes en Google Sheets |
+| `src/routes/seguimientos.js` | **Nuevo** | CRUD de seguimientos |
+| `src/routes/unidades.js` | **Nuevo** | Suministros recientes por unidad |
 
-No se toca: `auth.js`, `catalogos.js`, `usuarios.js`, `informes.js`, `importar.js`, `config/google.js`, `config/db.js`, `middleware/auth.js`.
+No se toca: `auth.js`, `catalogos.js`, `usuarios.js`, `importar.js`, `config/db.js`, `middleware/auth.js`.
 
 ---
 

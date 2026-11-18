@@ -57,8 +57,9 @@ async function getOrCreateFolder(drive, name, parentId) {
   const cacheKey = `${parentId}/${name}`;
   if (folderCache.has(cacheKey)) return folderCache.get(cacheKey);
 
-  // Search for existing folder
-  const query = `name='${name}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+  // Escapar comillas simples en el nombre para la query de Drive API
+  const nameSafe = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  const query = `name='${nameSafe}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
   const list = await drive.files.list({ q: query, fields: 'files(id)', spaces: 'drive' });
 
   let folderId;

@@ -1,0 +1,146 @@
+/* ── AdminInformes.css ───────────────────────────────────────────────────── */
+
+.inf-card {
+  margin-bottom: var(--gap);
+}
+
+/* Presets de fecha */
+.inf-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  margin-bottom: var(--gap);
+}
+
+.inf-preset-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: 1px solid var(--surface-border);
+  color: var(--text-secondary);
+  background: var(--bg);
+  transition: all var(--transition);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.inf-preset-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Grid de fecha inicio / fin */
+.inf-fechas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+
+@media (max-width: 400px) {
+  .inf-fechas {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Cabecera sedes: título + botón "todas" */
+.inf-sedes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--gap-sm);
+}
+
+.inf-sel-todas-btn {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 0;
+  background: none;
+  border: none;
+}
+
+.inf-sel-todas-btn:hover {
+  text-decoration: underline;
+}
+
+/* Chips de sedes */
+.inf-sedes-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  margin-top: var(--gap-sm);
+}
+
+.inf-sede-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 1px solid var(--surface-border);
+  background: var(--bg);
+  color: var(--text-secondary);
+  min-height: 36px;
+}
+
+.inf-sede-chip:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.inf-sede-chip.activa {
+  background: rgba(212, 168, 67, 0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.inf-check {
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+/* Tarjeta de resultado */
+.inf-result-card {
+  margin-top: var(--gap);
+}
+
+.inf-result-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  margin-bottom: var(--gap-sm);
+}
+
+.inf-result-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: var(--gap-sm);
+}
+
+.inf-result-num {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.inf-result-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.inf-result-meta {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  word-break: break-all;
+}

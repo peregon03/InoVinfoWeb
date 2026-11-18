@@ -5,7 +5,10 @@
       "Bash(npx tsc:*)",
       "Bash(npm install:*)",
       "Bash(cmd /c \"cd \\\\\"D:\\\\Michael\\\\Electroinova\\\\Desarrollos app\\\\InovInfoWeb\\\\web\\\\\" && npm install -D vite-plugin-pwa\" 2>&1)",
-      "Bash(find 'D:\\\\Michael\\\\Electroinova\\\\Desarrollos app\\\\InovInfoWeb' -name db* -o -name database* -o -name .env*)"
+      "Bash(find 'D:\\\\Michael\\\\Electroinova\\\\Desarrollos app\\\\InovInfoWeb' -name db* -o -name database* -o -name .env*)",
+      "Bash(rename:*)",
+      "Bash(powershell -Command \"Rename-Item -Path 'D:\\\\Michael\\\\Electroinova\\\\Desarrollos app\\\\InovInfoWeb\\\\backend\\\\migrations\\\\003_indexes.sql' -NewName '004_indexes.sql'\")",
+      "Bash(git:*)"
     ]
   }
 }

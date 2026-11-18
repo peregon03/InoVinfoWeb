@@ -129,18 +129,23 @@ router.post('/redactar', async (req, res) => {
         });
 
         const candidate = data?.candidates?.[0];
-        const finishReason = candidate?.finishReason;
         const text = candidate?.content?.parts?.[0]?.text;
-        console.log('Gemini finishReason:', finishReason, '| raw:', JSON.stringify(text));
 
         if (!text) {
             console.error('Gemini data:', JSON.stringify(data));
             return res.status(502).json({ error: 'Respuesta vacía del servicio de IA' });
         }
 
-        const cleaned = text.replace(/^["']|["']$/g, '').trim();
+        let cleaned = text.replace(/^["']|["']$/g, '').trim();
 
-        // Si Gemini dice SOLO_BASE o la respuesta está vacía, devolver solo el texto base
+        // A veces Gemini incluye el TEXTO_BASE en su respuesta a pesar de las instrucciones.
+        // Si lo detectamos, extraemos solo la parte posterior para evitar texto duplicado.
+        if (cleaned.includes(TEXTO_BASE)) {
+            const idx = cleaned.indexOf(TEXTO_BASE);
+            cleaned = cleaned.slice(idx + TEXTO_BASE.length).trim();
+        }
+
+        // Si Gemini dice SOLO_BASE o la respuesta quedó vacía, devolver solo el texto base
         let observacion;
         if (cleaned === 'SOLO_BASE' || !cleaned) {
             observacion = TEXTO_BASE;
@@ -150,12 +155,11 @@ router.post('/redactar', async (req, res) => {
             observacion = TEXTO_BASE + continuacion;
         }
 
-        console.log('Observacion final:', observacion);
         res.json({ observacion });
 
     } catch (err) {
         console.error('Error en POST /api/ia/redactar:', err.message);
-        res.status(502).json({ error: err.message || 'Error interno al procesar la redacción' });
+        res.status(502).json({ error: 'Error al procesar la redacción con IA' });
     }
 });
 

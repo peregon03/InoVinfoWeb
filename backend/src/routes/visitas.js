@@ -77,34 +77,55 @@ router.get('/', async (req, res) => {
 
         const result = await pool.query(query, params);
 
-        // NEW: add fotos_detalle for each visit (for the web app)
-        for (const row of result.rows) {
+        if (result.rows.length > 0) {
+            const ids = result.rows.map((r) => r.id);
+
+            // Cargar fotos_detalle en una sola consulta (evita N+1)
             const fotosRes = await pool.query(
-                'SELECT id, url, COALESCE(tipo, \'despues\') as tipo, drive_file_id FROM visita_fotos WHERE visita_id = $1 ORDER BY orden, id',
-                [row.id]
+                `SELECT id, visita_id, url, COALESCE(tipo, 'despues') AS tipo, drive_file_id
+                 FROM visita_fotos WHERE visita_id = ANY($1) ORDER BY visita_id, orden, id`,
+                [ids]
             );
-            row.fotos_detalle = fotosRes.rows;
-            row.fotos_count = fotosRes.rows.length;
+            const fotosPorVisita = new Map();
+            for (const f of fotosRes.rows) {
+                if (!fotosPorVisita.has(f.visita_id)) fotosPorVisita.set(f.visita_id, []);
+                fotosPorVisita.get(f.visita_id).push(f);
+            }
 
-            // v2: seguimiento info per visit
-            const segCreado = await pool.query(
-                'SELECT id, nota FROM seguimientos WHERE visita_origen_id = $1',
-                [row.id]
+            // Cargar seguimientos_creado en una sola consulta (evita N+1)
+            const segCreadoRes = await pool.query(
+                'SELECT id, visita_origen_id, nota FROM seguimientos WHERE visita_origen_id = ANY($1)',
+                [ids]
             );
-            row.seguimiento_creado = segCreado.rows.length > 0 ? segCreado.rows[0] : null;
+            const segCreadoPorVisita = new Map();
+            for (const s of segCreadoRes.rows) {
+                segCreadoPorVisita.set(s.visita_origen_id, s);
+            }
 
-            const segResuelto = await pool.query(
-                'SELECT id, nota, comentario_resolucion FROM seguimientos WHERE visita_resolucion_id = $1',
-                [row.id]
+            // Cargar seguimientos_resuelto en una sola consulta (evita N+1)
+            const segResueltoRes = await pool.query(
+                'SELECT id, visita_resolucion_id, nota, comentario_resolucion FROM seguimientos WHERE visita_resolucion_id = ANY($1)',
+                [ids]
             );
-            row.seguimiento_resuelto = segResuelto.rows.length > 0 ? segResuelto.rows[0] : null;
+            const segResueltoPorVisita = new Map();
+            for (const s of segResueltoRes.rows) {
+                segResueltoPorVisita.set(s.visita_resolucion_id, s);
+            }
+
+            for (const row of result.rows) {
+                const fotos = fotosPorVisita.get(row.id) || [];
+                row.fotos_detalle = fotos;
+                row.fotos_count = fotos.length;
+                row.seguimiento_creado = segCreadoPorVisita.get(row.id) || null;
+                row.seguimiento_resuelto = segResueltoPorVisita.get(row.id) || null;
+            }
         }
 
         res.json(result.rows);
 
     } catch (err) {
         console.error('Error en GET /api/visitas:', err.message);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Error al obtener visitas' });
     }
 });
 
@@ -133,7 +154,8 @@ router.get('/hoy', async (req, res) => {
         res.json(result.rows);
 
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Error en GET /api/visitas/hoy:', err.message);
+        res.status(500).json({ error: 'Error al obtener visitas de hoy' });
     }
 });
 
@@ -165,7 +187,8 @@ router.get('/pendientes', async (req, res) => {
         res.json(result.rows);
 
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Error en GET /api/visitas/pendientes:', err.message);
+        res.status(500).json({ error: 'Error al obtener pendientes' });
     }
 });
 
@@ -189,7 +212,8 @@ router.get('/progreso', async (req, res) => {
         });
 
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Error en GET /api/visitas/progreso:', err.message);
+        res.status(500).json({ error: 'Error al obtener progreso' });
     }
 });
 
@@ -239,10 +263,24 @@ router.post('/', async (req, res) => {
         const visita = visitaResult.rows[0];
 
         if (suministros && suministros.length > 0) {
+            // Deduplicar por suministro_id antes de insertar (suma cantidades si hay repetidos)
+            const sumMap = new Map();
             for (const s of suministros) {
+                const id = s.suministro_id;
+                if (sumMap.has(id)) {
+                    sumMap.get(id).cantidad += (s.cantidad || 1);
+                } else {
+                    sumMap.set(id, { suministro_id: id, cantidad: s.cantidad || 1 });
+                }
+            }
+
+            for (const s of sumMap.values()) {
                 await client.query(
-                    'INSERT INTO visita_suministros (visita_id, suministro_id, cantidad) VALUES ($1,$2,$3)',
-                    [visita.id, s.suministro_id, s.cantidad || 1]
+                    `INSERT INTO visita_suministros (visita_id, suministro_id, cantidad)
+                     VALUES ($1,$2,$3)
+                     ON CONFLICT (visita_id, suministro_id)
+                     DO UPDATE SET cantidad = visita_suministros.cantidad + EXCLUDED.cantidad`,
+                    [visita.id, s.suministro_id, s.cantidad]
                 );
             }
         }
@@ -297,7 +335,7 @@ router.post('/', async (req, res) => {
     } catch (err) {
         await client.query('ROLLBACK');
         console.error('Error en POST /api/visitas:', err.message);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Error al guardar la visita' });
     } finally {
         client.release();
     }
@@ -357,7 +395,9 @@ router.post('/:id/fotos', upload.single('foto'), async (req, res) => {
 
     } catch (err) {
         console.error('Error subiendo foto:', err.message);
-        res.status(500).json({ error: err.message });
+        // Propagar el mensaje de Drive (503 sin conexión) pero no detalles internos de DB
+        if (err.status === 503) return res.status(503).json({ error: err.message });
+        res.status(500).json({ error: 'Error al subir la foto' });
     }
 });
 
@@ -392,7 +432,7 @@ router.delete('/:id/fotos/:fotoId', async (req, res) => {
 
     } catch (err) {
         console.error('Error eliminando foto:', err.message);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Error al eliminar la foto' });
     }
 });
 
@@ -425,7 +465,8 @@ router.delete('/:id', async (req, res) => {
 
     } catch (err) {
         await client.query('ROLLBACK');
-        res.status(500).json({ error: err.message });
+        console.error('Error en DELETE /api/visitas:', err.message);
+        res.status(500).json({ error: 'Error al eliminar la visita' });
     } finally {
         client.release();
     }

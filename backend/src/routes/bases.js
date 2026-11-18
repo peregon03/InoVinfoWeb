@@ -41,7 +41,7 @@ router.post('/', soloCoordinadora, async (req, res) => {
 // PUT /api/catalogos/bases/:id
 router.put('/:id', soloCoordinadora, async (req, res) => {
     try {
-        const { id } = req.params;
+        const id = parseInt(req.params.id, 10);
         const { nombre, activa } = req.body;
         const result = await pool.query(
             'UPDATE bases SET nombre = COALESCE($1, nombre), activa = COALESCE($2, activa) WHERE id = $3 RETURNING id, nombre, activa, created_at',

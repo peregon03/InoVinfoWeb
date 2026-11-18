@@ -280,18 +280,21 @@
 .sum-selector {
   margin-top: var(--gap-sm);
   position: relative;
-  z-index: 20;
+  z-index: 30;
 }
 
 .sum-list {
-  max-height: 200px;
+  max-height: 240px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   margin-top: var(--gap-sm);
   background: var(--surface);
   border: 1px solid var(--surface-border);
   border-radius: 8px;
   position: relative;
-  z-index: 20;
+  z-index: 30;
+  /* Sombra para distinguirlo del contenido debajo */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
 .sum-option {
@@ -446,27 +449,8 @@
   align-self: flex-start;
 }
 
-/* ── v2: Alert modal ─────────────────────────────── */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  padding: var(--gap);
-}
-
-.modal-content {
-  background: var(--surface);
-  border: 1px solid var(--surface-border);
-  border-radius: 14px;
-  padding: 20px;
-  max-width: 400px;
-  width: 100%;
-}
-
+/* ── v2: Alert modal — estilos específicos de suministro ── */
+/* .modal-overlay y .modal-content están en global.css */
 .alert-sum-text {
   font-size: 0.9rem;
   line-height: 1.5;
@@ -508,11 +492,7 @@
   font-size: 1.1rem;
 }
 
-.spinner-sm {
-  width: 16px;
-  height: 16px;
-  border-width: 2px;
-}
+/* .spinner-sm está en global.css */
 
 .ia-badge {
   display: inline-block;
