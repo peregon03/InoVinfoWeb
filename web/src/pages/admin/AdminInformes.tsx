@@ -9,9 +9,12 @@ interface SedeInfo {
 
 interface InformeResult {
   totalVisitas: number
+  totalUnidades: number
   pestana: string
   sedesNombres: string
   sheetUrl: string | null
+  advertencias: string[]
+  verificacion: string[]
 }
 
 // Devuelve "YYYY-MM-DD" en la zona America/Bogotá
@@ -232,9 +235,15 @@ export default function AdminInformes() {
       {result && (
         <div className="card inf-result-card">
           <div className="inf-result-title">Informe generado</div>
-          <div className="inf-result-stat">
-            <span className="inf-result-num">{result.totalVisitas}</span>
-            <span className="inf-result-label">visitas registradas</span>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            <div className="inf-result-stat">
+              <span className="inf-result-num">{result.totalVisitas}</span>
+              <span className="inf-result-label">visitas</span>
+            </div>
+            <div className="inf-result-stat">
+              <span className="inf-result-num">{result.totalUnidades}</span>
+              <span className="inf-result-label">unidades</span>
+            </div>
           </div>
           <div className="inf-result-meta">
             <span>Bases: {result.sedesNombres}</span>
@@ -242,6 +251,22 @@ export default function AdminInformes() {
           <div className="inf-result-meta">
             <span>Pestaña: &ldquo;{result.pestana}&rdquo;</span>
           </div>
+          {result.advertencias && result.advertencias.length > 0 && (
+            <div className="alert alert-info" style={{ marginTop: 8, fontSize: '0.85rem' }}>
+              <strong>Advertencias:</strong>
+              <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
+                {result.advertencias.map((a, i) => <li key={i}>{a}</li>)}
+              </ul>
+            </div>
+          )}
+          {result.verificacion && result.verificacion.length > 0 && (
+            <div className="alert alert-error" style={{ marginTop: 8, fontSize: '0.85rem' }}>
+              <strong>Errores de verificacion:</strong>
+              <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
+                {result.verificacion.map((v, i) => <li key={i}>{v}</li>)}
+              </ul>
+            </div>
+          )}
           {result.sheetUrl ? (
             <a
               href={result.sheetUrl}

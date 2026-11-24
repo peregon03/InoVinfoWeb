@@ -182,6 +182,7 @@ export default function Historial() {
 
                   {v.es_extraordinaria && <span className="chip hist-tag" style={{ background: 'rgba(239,108,0,0.15)', color: '#EF6C00' }}>Extraordinaria</span>}
                   {v.es_otra_sede && <span className="chip hist-tag" style={{ background: 'rgba(92,107,192,0.15)', color: '#5C6BC0' }}>Otra sede</span>}
+                  {v.telo_accion && <span className="chip hist-tag" style={{ background: 'rgba(103,58,183,0.15)', color: '#673AB7' }}>{v.telo_accion === 'revisado' ? 'Telo revisado' : 'Telo retirado'}</span>}
 
                   {/* Fotos Antes */}
                   {fotosAntes.length > 0 && (

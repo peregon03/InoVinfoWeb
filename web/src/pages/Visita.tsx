@@ -114,6 +114,7 @@ export default function Visita() {
   // Opciones adicionales
   const [esExtraordinaria, setEsExtraordinaria] = useState(false)
   const [esOtraSede, setEsOtraSede] = useState(false)
+  const [teloAccion, setTeloAccion] = useState<'revisado' | 'retirado' | null>(null)
   // v2: seguimiento creation
   const [hacerSeguimiento, setHacerSeguimiento] = useState(false)
   const [notaSeguimiento, setNotaSeguimiento] = useState('')
@@ -429,6 +430,7 @@ export default function Visita() {
         base_id: null,
         es_extraordinaria: esExtraordinaria,
         es_otra_sede: esOtraSede,
+        telo_accion: teloAccion,
         // v2: legacy fields still sent for Android compat
         requiere_seguimiento: false,
         fecha_seguimiento: null,
@@ -523,6 +525,7 @@ export default function Visita() {
             base_id: null,
             es_extraordinaria: esExtraordinaria,
             es_otra_sede: esOtraSede,
+            telo_accion: teloAccion,
             requiere_seguimiento: false,
             fecha_seguimiento: null,
             nota_seguimiento: null,
@@ -1026,6 +1029,18 @@ export default function Visita() {
             <input type="checkbox" checked={esOtraSede} onChange={(e) => setEsOtraSede(e.target.checked)} />
             <span>Es de otra sede: agregar "(Unidad revisada en base operativa {sedeNombre || '...'})"</span>
           </label>
+
+          <div className="form-group" style={{ marginTop: 8 }}>
+            <label>Trabajo en Telo</label>
+            <select
+              value={teloAccion || ''}
+              onChange={(e) => setTeloAccion(e.target.value as 'revisado' | 'retirado' | null || null)}
+            >
+              <option value="">Sin trabajo en Telo</option>
+              <option value="revisado">Telo revisado y funcionando</option>
+              <option value="retirado">Telo retirado para mantenimiento</option>
+            </select>
+          </div>
 
           {/* v2: Hacer seguimiento */}
           {estadoNombre !== 'Pendiente' && (

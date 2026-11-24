@@ -47,6 +47,7 @@ export interface Suministro {
   nombre: string
   categoria: string | null
   precio_ref: number | null
+  texto_informe: string | null
   activo: boolean
 }
 
@@ -96,6 +97,7 @@ export interface Visita {
   checklist: Checklist | null
   es_extraordinaria: boolean
   es_otra_sede: boolean
+  telo_accion: 'revisado' | 'retirado' | null
   requiere_seguimiento: boolean
   fecha_seguimiento: string | null
   nota_seguimiento: string | null

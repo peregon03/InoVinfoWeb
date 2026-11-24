@@ -1,0 +1,706 @@
+[
+ {
+  "unidad_id": 1,
+  "unidad_numero": "16029",
+  "sede_nombre": "Cali",
+  "base_nombre": "Buga",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": true,
+  "id": 1,
+  "estado": "Con novedad",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras, durante la inspección se encuentra el visor con la pantalla negra, siendo necesario su reemplazo (Unidad revisada en base operativa Buga)",
+  "es_extraordinaria": false,
+  "suministros": [
+   {
+    "nombre": "Visor/Monitor 7''",
+    "texto_informe": "Suministro e Instalación Visor/Monitor 7''",
+    "cantidad": 1
+   }
+  ],
+  "created_at": "2026-09-26T15:30:00.000Z"
+ },
+ {
+  "unidad_id": 2,
+  "unidad_numero": "6001",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 2,
+  "estado": "OK",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T13:00:00.000Z"
+ },
+ {
+  "unidad_id": 3,
+  "unidad_numero": "4005",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 3,
+  "estado": "OK",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T13:07:00.000Z"
+ },
+ {
+  "unidad_id": 4,
+  "unidad_numero": "16017",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 4,
+  "estado": "OK",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T13:14:00.000Z"
+ },
+ {
+  "unidad_id": 5,
+  "unidad_numero": "2236",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 5,
+  "estado": "Inoperativa",
+  "observacion_estructurada": "Al momento de la visita esta unidad se encuentra inoperativa",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T13:21:00.000Z"
+ },
+ {
+  "unidad_id": 6,
+  "unidad_numero": "16025",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 6,
+  "estado": "OK",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T13:28:00.000Z"
+ },
+ {
+  "unidad_id": 7,
+  "unidad_numero": "16026",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 7,
+  "estado": "Inoperativa",
+  "observacion_estructurada": "Al momento de la visita esta unidad se encuentra inoperativa",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T13:35:00.000Z"
+ },
+ {
+  "unidad_id": 8,
+  "unidad_numero": "25022",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 8,
+  "estado": "Inoperativa",
+  "observacion_estructurada": "Al momento de la visita esta unidad se encuentra inoperativa",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T13:42:00.000Z"
+ },
+ {
+  "unidad_id": 9,
+  "unidad_numero": "6000",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 9,
+  "estado": "Inoperativa",
+  "observacion_estructurada": "Al momento de la visita esta unidad se encuentra inoperativa",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T13:49:00.000Z"
+ },
+ {
+  "unidad_id": 10,
+  "unidad_numero": "16021",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": "revisado",
+  "es_otra_sede": false,
+  "id": 10,
+  "estado": "OK",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T13:56:00.000Z"
+ },
+ {
+  "unidad_id": 11,
+  "unidad_numero": "16023",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 11,
+  "estado": "Con novedad",
+  "observacion_estructurada": "A solicitud del area de mantenimiento se realiza visita el 8 de Octubre encontrándose la cámara de reversa sin funcionar, se realiza cambio de la cámara y reinicio de la tarjeta de video, quedando el sistema y las grabaciones funcionando correctamente",
+  "es_extraordinaria": true,
+  "suministros": [
+   {
+    "nombre": "Cámara Reversa",
+    "texto_informe": "Sum Cámara Reversa",
+    "cantidad": 1
+   }
+  ],
+  "created_at": "2026-10-08T14:00:00.000Z"
+ },
+ {
+  "unidad_id": 11,
+  "unidad_numero": "16023",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 12,
+  "estado": "OK",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T14:03:00.000Z"
+ },
+ {
+  "unidad_id": 12,
+  "unidad_numero": "16019",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": "retirado",
+  "es_otra_sede": false,
+  "id": 13,
+  "estado": "Con novedad",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras, durante la inspección se encuentra la cámara lateral muy sucia sin permitir la visualización, la cámara de reversa presenta deterioro y desgaste funcional",
+  "es_extraordinaria": false,
+  "suministros": [
+   {
+    "nombre": "Cámara Reversa",
+    "texto_informe": "Sum Cámara Reversa",
+    "cantidad": 1
+   },
+   {
+    "nombre": "Accesorios General",
+    "texto_informe": "Sum - Cambio Accesorios General",
+    "cantidad": 1
+   }
+  ],
+  "created_at": "2026-10-04T14:10:00.000Z"
+ },
+ {
+  "unidad_id": 13,
+  "unidad_numero": "25018",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 14,
+  "estado": "Con novedad",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras, durante la inspección se encuentra falla en la unidad de almacenamiento siendo necesario su reemplazo",
+  "es_extraordinaria": false,
+  "suministros": [
+   {
+    "nombre": "Unidad M.2-500MB/S-SSD240GB Especial Sistema Grabación Móvil",
+    "texto_informe": "Sum - Cambio Unidad M.2-500MB/S-SSD240GB Especial Sistema Grabación Móvil",
+    "cantidad": 1
+   },
+   {
+    "nombre": "Accesorios General",
+    "texto_informe": "Sum - Cambio Accesorios General",
+    "cantidad": 1
+   }
+  ],
+  "created_at": "2026-10-04T14:17:00.000Z"
+ },
+ {
+  "unidad_id": 14,
+  "unidad_numero": "16028",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": "retirado",
+  "es_otra_sede": false,
+  "id": 15,
+  "estado": "Con novedad",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras, durante la inspeccion se observa deterioro en la imagen de la camara frontal",
+  "es_extraordinaria": false,
+  "suministros": [
+   {
+    "nombre": "Cámara Frontal",
+    "texto_informe": "Sum Cámara Frontal",
+    "cantidad": 1
+   }
+  ],
+  "created_at": "2026-10-04T14:24:00.000Z"
+ },
+ {
+  "unidad_id": 15,
+  "unidad_numero": "25021",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": "retirado",
+  "es_otra_sede": false,
+  "id": 16,
+  "estado": "Con novedad",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras, durante la inspección se encuentra el visor con deterioro siendo necesario su reemplazo, se ajusta la cámara de reversa que al parecer había sido golpeada",
+  "es_extraordinaria": false,
+  "suministros": [
+   {
+    "nombre": "Visor/Monitor 7''",
+    "texto_informe": "Suministro e Instalación Visor/Monitor 7''",
+    "cantidad": 1
+   }
+  ],
+  "created_at": "2026-10-04T14:31:00.000Z"
+ },
+ {
+  "unidad_id": 16,
+  "unidad_numero": "4002",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 17,
+  "estado": "Con novedad",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras, durante la inspección se encuentra la cámara frontal con deterioro y falla en el infrarrojo siendo necesario su reemplazo",
+  "es_extraordinaria": false,
+  "suministros": [
+   {
+    "nombre": "Cámara Frontal",
+    "texto_informe": "Sum Cámara Frontal",
+    "cantidad": 1
+   }
+  ],
+  "created_at": "2026-10-04T14:38:00.000Z"
+ },
+ {
+  "unidad_id": 17,
+  "unidad_numero": "5006",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 18,
+  "estado": "Con novedad",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras, durante la inspección se encuentran fusibles quemados y el cableado de las cámaras trasera y lateral afectado por el cambio de la caja compactadora, siendo necesario el suministro de cable y el reemplazo de las cámaras lateral y de reversa",
+  "es_extraordinaria": false,
+  "suministros": [
+   {
+    "nombre": "Cable Encauchetado Especial Con Protección Fase De Video X15 Mts",
+    "texto_informe": "Sum - Cambio Cable Encauchetado Especial Con Protección Fase De Video X15 Mts",
+    "cantidad": 2
+   },
+   {
+    "nombre": "Cámara Lateral",
+    "texto_informe": "Sum Cámara Lateral",
+    "cantidad": 1
+   },
+   {
+    "nombre": "Cámara Reversa",
+    "texto_informe": "Sum Cámara Reversa",
+    "cantidad": 1
+   },
+   {
+    "nombre": "Accesorios General",
+    "texto_informe": "Sum - Cambio Accesorios General",
+    "cantidad": 1
+   }
+  ],
+  "created_at": "2026-10-04T14:45:00.000Z"
+ },
+ {
+  "unidad_id": 18,
+  "unidad_numero": "16024",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": "retirado",
+  "es_otra_sede": false,
+  "id": 19,
+  "estado": "OK",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T14:52:00.000Z"
+ },
+ {
+  "unidad_id": 19,
+  "unidad_numero": "BR04",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 20,
+  "estado": "Con novedad",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras, durante la inspección el Visor presenta pantalla azul e imagen con colores alterados",
+  "es_extraordinaria": false,
+  "suministros": [
+   {
+    "nombre": "Tarjeta Video Especial V/CA 1080 Sistema Dvr Móvil",
+    "texto_informe": "Sum Tarjeta Video Especial V/CA 1080 Sistema Dvr Móvil",
+    "cantidad": 1
+   }
+  ],
+  "created_at": "2026-10-04T14:59:00.000Z"
+ },
+ {
+  "unidad_id": 20,
+  "unidad_numero": "42005",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 21,
+  "estado": "Con novedad",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras, durante la inspección se encuentra la cámara lateral muy sucia sin permitir la visualización",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T15:06:00.000Z"
+ },
+ {
+  "unidad_id": 21,
+  "unidad_numero": "7112",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 22,
+  "estado": "Con novedad",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras, durante la inspección se encuentra el sistema apagado por desconexión de la alimentación directa a las baterías, se realiza la conexión y queda OK",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T15:13:00.000Z"
+ },
+ {
+  "unidad_id": 22,
+  "unidad_numero": "3052",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 23,
+  "estado": "Con novedad",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras, durante la inspección se evidencia que el conductor ubica el celular en un trípode que obstruye la visual de la cámara de cabina hacia el conductor",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T15:20:00.000Z"
+ },
+ {
+  "unidad_id": 23,
+  "unidad_numero": "42007",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 24,
+  "estado": "OK",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T15:27:00.000Z"
+ },
+ {
+  "unidad_id": 24,
+  "unidad_numero": "BR07",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 25,
+  "estado": "OK",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T15:34:00.000Z"
+ },
+ {
+  "unidad_id": 25,
+  "unidad_numero": "6002",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 26,
+  "estado": "Con novedad",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras, durante la inspección se encuentra la cámara de reversa muy sucia",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T15:41:00.000Z"
+ },
+ {
+  "unidad_id": 26,
+  "unidad_numero": "3024",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 27,
+  "estado": "OK",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T15:48:00.000Z"
+ },
+ {
+  "unidad_id": 27,
+  "unidad_numero": "3022",
+  "sede_nombre": "Tuluá",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 28,
+  "estado": "OK",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T15:55:00.000Z"
+ },
+ {
+  "unidad_id": 28,
+  "unidad_numero": "42003",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 29,
+  "estado": "Con novedad",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras, durante la inspección se encuentra falla en el almacenamiento del sistema",
+  "es_extraordinaria": false,
+  "suministros": [
+   {
+    "nombre": "Unidad M.2-500MB/S-SSD240GB Especial Sistema Grabación Móvil",
+    "texto_informe": "Sum Cambio Unidad M.2-500MB/S-SSD240GB Especial Sistema Grabación Móvil",
+    "cantidad": 1
+   }
+  ],
+  "created_at": "2026-10-04T16:02:00.000Z"
+ },
+ {
+  "unidad_id": 29,
+  "unidad_numero": "42002",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 30,
+  "estado": "Con novedad",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras, durante la inspección la cámara de reversa presenta intermitencia en su funcionamiento, siendo necesario su reemplazo",
+  "es_extraordinaria": false,
+  "suministros": [
+   {
+    "nombre": "Cámara Reversa",
+    "texto_informe": "Sum Cámara Reversa",
+    "cantidad": 1
+   },
+   {
+    "nombre": "Batería Respaldo Interno Especial Sistema Grabación Móvil",
+    "texto_informe": "Sum - Cambio Batería Respaldo Interno Especial Sistema Grabación Móvil",
+    "cantidad": 1
+   }
+  ],
+  "created_at": "2026-10-04T16:09:00.000Z"
+ },
+ {
+  "unidad_id": 30,
+  "unidad_numero": "16027",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 31,
+  "estado": "Con novedad",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras, durante la inspección el sistema presenta congelamiento de la imagen, siendo necesario la reparacion de la maind board, la cámara de visión directa presenta falla siendo necesario su reemplazo y se ajustan los ángulos.",
+  "es_extraordinaria": false,
+  "suministros": [
+   {
+    "nombre": "Main Board Dvr Móvil",
+    "texto_informe": "Reparación Main Board Dvr Móvil",
+    "cantidad": 1
+   },
+   {
+    "nombre": "Cámara Visión Directa",
+    "texto_informe": "Sum Cámara Visión Directa",
+    "cantidad": 1
+   }
+  ],
+  "created_at": "2026-10-04T16:16:00.000Z"
+ },
+ {
+  "unidad_id": 31,
+  "unidad_numero": "3051",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 32,
+  "estado": "Con novedad",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras, durante la inspección se encuentra el equipo con fecha de 2011 y sin grabaciones",
+  "es_extraordinaria": false,
+  "suministros": [
+   {
+    "nombre": "Batería Respaldo Interno Especial Sistema Grabación Móvil",
+    "texto_informe": "Sum - Cambio Batería Respaldo Interno Especial Sistema Grabación Móvil",
+    "cantidad": 1
+   }
+  ],
+  "created_at": "2026-10-04T16:23:00.000Z"
+ },
+ {
+  "unidad_id": 32,
+  "unidad_numero": "16014",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 33,
+  "estado": "Con novedad",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras, durante la inspección se encuentra la tarjeta de red bloqueada porque el vehículo está conectado directo, y las cámaras de cabina y lateral muy sucias, se recomkienda instalacion de master",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T16:30:00.000Z"
+ },
+ {
+  "unidad_id": 33,
+  "unidad_numero": "42006",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 34,
+  "estado": "OK",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T16:37:00.000Z"
+ },
+ {
+  "unidad_id": 34,
+  "unidad_numero": "7083",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 35,
+  "estado": "OK",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T16:44:00.000Z"
+ },
+ {
+  "unidad_id": 35,
+  "unidad_numero": "16015",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 36,
+  "estado": "Inoperativa",
+  "observacion_estructurada": "Al momento de la visita esta unidad se encuentra inoperativa",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T16:51:00.000Z"
+ },
+ {
+  "unidad_id": 36,
+  "unidad_numero": "16020",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 37,
+  "estado": "Inoperativa",
+  "observacion_estructurada": "Al momento de la visita esta unidad se encuentra inoperativa",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T16:58:00.000Z"
+ },
+ {
+  "unidad_id": 37,
+  "unidad_numero": "Minicargador 6",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 38,
+  "estado": "Inoperativa",
+  "observacion_estructurada": "Al momento de la visita esta unidad se encuentra inoperativa",
+  "es_extraordinaria": false,
+  "suministros": [],
+  "created_at": "2026-10-04T17:05:00.000Z"
+ },
+ {
+  "unidad_id": 38,
+  "unidad_numero": "3031",
+  "sede_nombre": "Cali",
+  "base_nombre": "Palmira",
+  "novedad_texto": null,
+  "telo_accion": null,
+  "es_otra_sede": false,
+  "id": 39,
+  "estado": "OK",
+  "observacion_estructurada": "Se ejecutó el servicio de revisión, diagnóstico técnico, ajuste, reparación, mantenimiento general y limpieza del sistema de cámaras",
+  "es_extraordinaria": false,
+  "suministros": [
+   {
+    "nombre": "Accesorios General",
+    "texto_informe": "Sum - Cambio Accesorios General",
+    "cantidad": 1
+   }
+  ],
+  "created_at": "2026-10-04T17:12:00.000Z"
+ }
+]

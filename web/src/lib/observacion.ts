@@ -16,6 +16,14 @@ const TEXTOS_POR_ESTADO: Record<string, string> = {
   'Bat. desconectada': 'Al momento de la visita la batería de la unidad se encontraba desconectada',
 }
 
+const MESES_LARGOS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto',
+  'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+
+function normalizarHallazgo(h: string): string {
+  const t = h.trim().replace(/\s+/g, ' ').replace(/[.\s]+$/, '')
+  return t ? t.charAt(0).toLowerCase() + t.slice(1) : ''
+}
+
 export function construirObservacion(params: ObservacionParams): string {
   const { estado, hallazgo, esExtraordinaria, esOtraSede, sedeNombre } = params
 
@@ -23,21 +31,26 @@ export function construirObservacion(params: ObservacionParams): string {
 
   let texto: string
 
-  if (estado === 'Con novedad') {
-    const h = hallazgo?.trim() || ''
+  if (esExtraordinaria) {
+    // Formato del informe Veolia: "A solicitud del area de mantenimiento se realiza visita el {dia} de {Mes}..."
+    const ahora = new Date()
+    const partes = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).formatToParts(ahora)
+    const dia = Number(partes.find((p) => p.type === 'day')!.value)
+    const mes = Number(partes.find((p) => p.type === 'month')!.value)
+    const prefijo = `A solicitud del area de mantenimiento se realiza visita el ${dia} de ${MESES_LARGOS[mes - 1]}`
+    const h = normalizarHallazgo(hallazgo || '')
+    texto = h ? `${prefijo} ${h}` : `${prefijo}, ${normalizarHallazgo(TEXTO_ESTANDAR)}`
+  } else if (estado === 'Con novedad') {
+    const h = normalizarHallazgo(hallazgo || '')
     if (h) {
-      // Minúscula inicial y sin punto final
-      const hallazgoNorm = h.charAt(0).toLowerCase() + h.slice(1).replace(/\.+$/, '')
-      texto = `${TEXTO_ESTANDAR}, durante la inspección ${hallazgoNorm}`
+      texto = `${TEXTO_ESTANDAR}, durante la inspección ${h}`
     } else {
       texto = TEXTO_ESTANDAR
     }
   } else {
     texto = TEXTOS_POR_ESTADO[estado] || TEXTO_ESTANDAR
-  }
-
-  if (esExtraordinaria) {
-    texto += '. Visita extraordinaria a solicitud del área de mantenimiento'
   }
 
   if (esOtraSede && sedeNombre) {

@@ -44,6 +44,7 @@ router.get('/', async (req, res) => {
                    v.novedad_texto, v.observacion_estructurada,
                    v.sede_id, v.base_id, v.atraso_hora_min, v.dias_grabacion,
                    v.h264_plus, v.checklist, v.es_extraordinaria, v.es_otra_sede,
+                   v.telo_accion,
                    u2.nombre  AS tecnico_nombre,
                    un.id      AS unidad_id,
                    un.numero  AS unidad_numero,
@@ -226,12 +227,17 @@ router.post('/', async (req, res) => {
         // NEW optional fields
         sede_id, base_id, atraso_hora_min, dias_grabacion,
         h264_plus, checklist, es_extraordinaria, es_otra_sede,
+        telo_accion,
         // v2: seguimientos
         seguimiento, seguimientos_revisados
     } = req.body;
 
     if (!unidad_id || !estado_id) {
         return res.status(400).json({ error: 'Unidad y estado son requeridos' });
+    }
+    // Validar telo_accion
+    if (telo_accion && !['revisado', 'retirado'].includes(telo_accion)) {
+        return res.status(400).json({ error: 'telo_accion debe ser "revisado" o "retirado"' });
     }
 
     const client = await pool.connect();
@@ -245,8 +251,9 @@ router.post('/', async (req, res) => {
                  observacion_estructurada, requiere_seguimiento,
                  fecha_seguimiento, nota_seguimiento,
                  sede_id, base_id, atraso_hora_min, dias_grabacion,
-                 h264_plus, checklist, es_extraordinaria, es_otra_sede)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+                 h264_plus, checklist, es_extraordinaria, es_otra_sede,
+                 telo_accion)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
             RETURNING *
         `, [
             unidad_id, req.usuario.id, estado_id, novedad_texto || null,
@@ -257,7 +264,8 @@ router.post('/', async (req, res) => {
             dias_grabacion != null ? Number(dias_grabacion) : null,
             h264_plus != null ? h264_plus : null,
             checklist ? JSON.stringify(checklist) : null,
-            es_extraordinaria || false, es_otra_sede || false
+            es_extraordinaria || false, es_otra_sede || false,
+            telo_accion || null
         ]);
 
         const visita = visitaResult.rows[0];

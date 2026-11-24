@@ -13,6 +13,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ── Assets del informe Veolia (público, sin auth, antes de todo) ─────────────
+app.use('/informe-assets', express.static(
+    path.join(__dirname, 'informes', 'veolia', 'assets'),
+    { maxAge: '7d', fallthrough: false }
+));
+
 // ── Rutas API ─────────────────────────────────────────────────────────────────
 app.use('/api/auth',            require('./routes/auth'));
 app.use('/api/usuarios',        require('./routes/usuarios'));

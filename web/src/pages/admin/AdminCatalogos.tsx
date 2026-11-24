@@ -211,6 +211,8 @@ function SuministrosPanel({ canEdit }: { canEdit: boolean }) {
   const [items, setItems] = useState<Suministro[]>([])
   const [loading, setLoading] = useState(true)
   const [nombre, setNombre] = useState('')
+  const [editando, setEditando] = useState<number | null>(null)
+  const [textoInforme, setTextoInforme] = useState('')
 
   useEffect(() => {
     api.get<Suministro[]>('/catalogos/suministros').then(setItems).finally(() => setLoading(false))
@@ -232,6 +234,19 @@ function SuministrosPanel({ canEdit }: { canEdit: boolean }) {
     } catch (e) { alert(e instanceof ApiError ? e.message : 'Error') }
   }
 
+  function abrirEdicion(s: Suministro) {
+    setEditando(s.id)
+    setTextoInforme(s.texto_informe || '')
+  }
+
+  async function guardarTextoInforme(s: Suministro) {
+    try {
+      await api.put(`/catalogos/suministros/${s.id}`, { texto_informe: textoInforme.trim() })
+      setItems((p) => p.map((x) => x.id === s.id ? { ...x, texto_informe: textoInforme.trim() || null } : x))
+      setEditando(null)
+    } catch (e) { alert(e instanceof ApiError ? e.message : 'Error') }
+  }
+
   if (loading) return <div style={{ padding: 20, textAlign: 'center' }}><div className="spinner" style={{ margin: '0 auto' }} /></div>
 
   return (
@@ -244,15 +259,48 @@ function SuministrosPanel({ canEdit }: { canEdit: boolean }) {
       )}
       <div className="admin-list">
         {items.map((s) => (
-          <div key={s.id} className="card admin-list-item">
-            <div>
-              <span className="item-name" style={{ opacity: s.activo ? 1 : 0.5 }}>{s.nombre}</span>
-              {s.categoria && <span className="item-meta" style={{ marginLeft: 8 }}>{s.categoria}</span>}
+          <div key={s.id} className="card admin-list-item" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 6 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <span className="item-name" style={{ opacity: s.activo ? 1 : 0.5 }}>{s.nombre}</span>
+                {s.categoria && <span className="item-meta" style={{ marginLeft: 8 }}>{s.categoria}</span>}
+              </div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                {canEdit && (
+                  <>
+                    <button className="btn btn-outline" style={{ minHeight: 36, fontSize: '0.8rem' }} onClick={() => editando === s.id ? setEditando(null) : abrirEdicion(s)}>
+                      {editando === s.id ? 'Cerrar' : 'Texto informe'}
+                    </button>
+                    <button className={`btn ${s.activo ? 'btn-outline' : 'btn-secondary'}`} style={{ minHeight: 36, fontSize: '0.8rem' }} onClick={() => toggle(s)}>
+                      {s.activo ? 'Desactivar' : 'Activar'}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
-            {canEdit && (
-              <button className={`btn ${s.activo ? 'btn-outline' : 'btn-secondary'}`} style={{ minHeight: 36, fontSize: '0.8rem' }} onClick={() => toggle(s)}>
-                {s.activo ? 'Desactivar' : 'Activar'}
-              </button>
+            {s.texto_informe && editando !== s.id && (
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', paddingLeft: 4 }}>
+                Informe: {s.texto_informe}
+              </div>
+            )}
+            {editando === s.id && (
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <input
+                  value={textoInforme}
+                  onChange={(e) => setTextoInforme(e.target.value)}
+                  placeholder={`Sum ${s.nombre}`}
+                  style={{ flex: 1, fontSize: '0.85rem' }}
+                  onKeyDown={(e) => e.key === 'Enter' && guardarTextoInforme(s)}
+                />
+                <button className="btn btn-primary" style={{ minHeight: 36, fontSize: '0.8rem' }} onClick={() => guardarTextoInforme(s)}>
+                  Guardar
+                </button>
+              </div>
+            )}
+            {editando === s.id && (
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                Vista previa: {textoInforme.trim() || `Sum ${s.nombre}`}
+              </div>
             )}
           </div>
         ))}

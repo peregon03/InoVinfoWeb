@@ -23,9 +23,11 @@ router.get('/sedes', async (req, res) => {
 // Body: { fechaDesde, fechaHasta, sedeIds: number[], linkFotos? }
 router.post('/generar', async (req, res) => {
     try {
-        const { fechaDesde, fechaHasta, sedeIds, linkFotos } = req.body;
+        const { fechaDesde, fechaHasta, linkFotos } = req.body;
+        // Acepta sedeIds (array) o sedeId (número) por compatibilidad
+        let sedeIds = req.body.sedeIds;
+        if (!sedeIds && req.body.sedeId) sedeIds = [req.body.sedeId];
 
-        // Validaciones básicas
         if (!fechaDesde || !fechaHasta) {
             return res.status(400).json({ error: 'Las fechas son requeridas' });
         }
@@ -48,45 +50,34 @@ router.post('/generar', async (req, res) => {
             return res.status(404).json({ error: 'No se encontraron las sedes indicadas' });
         }
 
-        // Generar una pestaña por sede (formato Veolia original)
-        let totalVisitas = 0;
-        const pestanas = [];
-        let sheetUrl = null;
+        const sedes = sedesSeleccionadas.map((s) => s.nombre);
 
-        for (const sede of sedesSeleccionadas) {
-            try {
-                const result = await generarInforme({
-                    fechaDesde,
-                    fechaHasta,
-                    sedeId: sede.id,
-                    sedeNombre: sede.nombre,
-                    linkFotos: linkFotos?.trim() || null,
-                });
-                totalVisitas += result.totalVisitas;
-                pestanas.push(result.pestana);
-                sheetUrl = result.sheetUrl;
-            } catch (err) {
-                // Saltar sedes sin visitas, lanzar otros errores
-                if (err.message && err.message.includes('No hay visitas')) continue;
-                throw err;
-            }
+        const result = await generarInforme({
+            fechaDesde,
+            fechaHasta,
+            sedeIds: idsValidos,
+            sedes,
+            linkFotos: linkFotos?.trim() || null,
+        });
+
+        // Log de verificación si hay diferencias
+        if (result.verificacion && result.verificacion.length > 0) {
+            console.error('Verificación del informe encontró diferencias:', result.verificacion);
         }
-
-        if (totalVisitas === 0) {
-            return res.status(404).json({ error: 'No hay visitas en el rango de fechas seleccionado' });
-        }
-
-        const nombresSedes = sedesSeleccionadas.map((s) => s.nombre).join(' + ');
 
         res.json({
-            totalVisitas,
-            pestana: pestanas.join(', '),
-            sedesNombres: nombresSedes,
-            sheetUrl: sheetUrl ? sheetUrl.split('#')[0] : null,
+            sheetUrl: result.sheetUrl || null,
+            pestana: result.pestana,
+            totalVisitas: result.totalVisitas,
+            totalUnidades: result.totalUnidades,
+            sedesNombres: sedes.join(' + '),
+            advertencias: result.advertencias || [],
+            verificacion: result.verificacion || [],
         });
     } catch (err) {
         console.error('Error al generar informe:', err.message);
-        res.status(500).json({ error: err.message || 'Error al generar el informe' });
+        const status = err.status || 500;
+        res.status(status).json({ error: err.message || 'Error al generar el informe' });
     }
 });
 
