@@ -102,17 +102,10 @@ function armarBloques(visitas) {
     lista.sort((a, b) => instante(a) - instante(b) || (a.id || 0) - (b.id || 0));
     const extraordinarias = lista.filter((v) => v.es_extraordinaria);
     const regulares = lista.filter((v) => !v.es_extraordinaria);
-    // Si la misma unidad tiene varias visitas normales (doble envío, re-visita), manda la ÚLTIMA.
-    const principal = regulares.length ? regulares[regulares.length - 1] : null;
-    if (regulares.length > 1) {
-      advertencias.push(
-        `Unidad ${principal.unidad_numero}: ${regulares.length} visitas en el periodo; el informe usa la última ` +
-        `(${fechaCorta(principal)} ${horaCorta(principal)}).`);
-    }
-    // Orden dentro del bloque: primero las extraordinarias, al final la visita normal.
-    const delBloque = [...extraordinarias, ...(principal ? [principal] : [])];
+    // Todas las visitas de la unidad van al informe (extraordinarias primero, luego regulares en orden cronológico).
+    const delBloque = [...extraordinarias, ...regulares];
     totalVisitas += delBloque.length;
-    const referencia = principal || extraordinarias[extraordinarias.length - 1];
+    const referencia = regulares.length ? regulares[regulares.length - 1] : extraordinarias[extraordinarias.length - 1];
 
     const filasMtto = [];
     for (const v of delBloque) {
@@ -121,7 +114,7 @@ function armarBloques(visitas) {
     }
 
     const actividades = [];
-    const telo = [principal, ...extraordinarias.slice().reverse()]
+    const telo = [...regulares.slice().reverse(), ...extraordinarias.slice().reverse()]
       .map((v) => v && v.telo_accion)
       .find((accion) => accion && T.TEXTO_TELO[accion]);
     if (telo) actividades.push({ actividad: T.ACTIVIDAD_TELO, observacion: T.TEXTO_TELO[telo] });
