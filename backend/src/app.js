@@ -4,7 +4,7 @@ process.env.TZ = 'America/Bogota';
 const express  = require('express');
 const cors     = require('cors');
 const path     = require('path');
-require('dotenv').config();
+// dotenv se carga en server.js con path explícito — NO duplicar aquí
 
 const app = express();
 
