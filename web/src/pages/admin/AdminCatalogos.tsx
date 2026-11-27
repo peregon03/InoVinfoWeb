@@ -189,13 +189,13 @@ function UnidadesPanel({ canEdit }: { canEdit: boolean }) {
   return (
     <div>
       {canEdit && (
-        <div className="admin-inline-form" style={{ flexWrap: 'wrap' }}>
-          <input placeholder="Número..." value={numero} onChange={(e) => setNumero(e.target.value)} style={{ minWidth: 100 }} />
-          <select value={sedeId} onChange={(e) => setSedeId(e.target.value)} style={{ minWidth: 120 }}>
+        <div className="admin-inline-form" style={{ flexWrap: 'wrap', gap: 8 }}>
+          <input placeholder="Número..." value={numero} onChange={(e) => setNumero(e.target.value)} style={{ flex: '1 1 200px', minWidth: 0 }} />
+          <select value={sedeId} onChange={(e) => setSedeId(e.target.value)} style={{ flex: '1 1 200px', minWidth: 0 }}>
             <option value="">Sede...</option>
             {sedes.filter((s) => s.activa).map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
           </select>
-          <button className="btn btn-primary" onClick={crear}>Agregar</button>
+          <button className="btn btn-primary" style={{ flexShrink: 0 }} onClick={crear}>Agregar</button>
         </div>
       )}
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
