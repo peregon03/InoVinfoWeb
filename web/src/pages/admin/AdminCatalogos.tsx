@@ -234,6 +234,14 @@ function SuministrosPanel({ canEdit }: { canEdit: boolean }) {
     } catch (e) { alert(e instanceof ApiError ? e.message : 'Error') }
   }
 
+  async function eliminar(s: Suministro) {
+    if (!confirm(`¿Eliminar "${s.nombre}"? Esta acción no se puede deshacer.`)) return
+    try {
+      await api.delete(`/catalogos/suministros/${s.id}`)
+      setItems((p) => p.filter((x) => x.id !== s.id))
+    } catch (e) { alert(e instanceof ApiError ? e.message : 'Error al eliminar') }
+  }
+
   function abrirEdicion(s: Suministro) {
     setEditando(s.id)
     setTextoInforme(s.texto_informe || '')
@@ -273,6 +281,9 @@ function SuministrosPanel({ canEdit }: { canEdit: boolean }) {
                     </button>
                     <button className={`btn ${s.activo ? 'btn-outline' : 'btn-secondary'}`} style={{ minHeight: 36, fontSize: '0.8rem' }} onClick={() => toggle(s)}>
                       {s.activo ? 'Desactivar' : 'Activar'}
+                    </button>
+                    <button className="btn btn-danger" style={{ minHeight: 36, fontSize: '0.8rem' }} onClick={() => eliminar(s)}>
+                      Eliminar
                     </button>
                   </>
                 )}

@@ -127,6 +127,24 @@ router.put('/suministros/:id', coordinadoraOPermiso('EDITAR_CATALOGOS'), async (
     }
 });
 
+router.delete('/suministros/:id', coordinadoraOPermiso('EDITAR_CATALOGOS'), async (req, res) => {
+    try {
+        const usado = await pool.query(
+            'SELECT 1 FROM visita_suministros WHERE suministro_id = $1 LIMIT 1',
+            [req.params.id]
+        );
+        if (usado.rows.length > 0) {
+            return res.status(409).json({ error: 'No se puede eliminar: este suministro ya fue usado en visitas. Desactívelo en su lugar.' });
+        }
+        const r = await pool.query('DELETE FROM suministros WHERE id = $1 RETURNING id', [req.params.id]);
+        if (r.rows.length === 0) return res.status(404).json({ error: 'Suministro no encontrado' });
+        res.json({ ok: true });
+    } catch (err) {
+        console.error('Error DELETE /catalogos/suministros:', err.message);
+        res.status(500).json({ error: 'Error al eliminar suministro' });
+    }
+});
+
 // ── Estados de visita ────────────────────────────────────────────────────────
 
 router.get('/estados', async (req, res) => {

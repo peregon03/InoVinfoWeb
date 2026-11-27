@@ -8,7 +8,17 @@
       "Bash(find 'D:\\\\Michael\\\\Electroinova\\\\Desarrollos app\\\\InovInfoWeb' -name db* -o -name database* -o -name .env*)",
       "Bash(rename:*)",
       "Bash(powershell -Command \"Rename-Item -Path 'D:\\\\Michael\\\\Electroinova\\\\Desarrollos app\\\\InovInfoWeb\\\\backend\\\\migrations\\\\003_indexes.sql' -NewName '004_indexes.sql'\")",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(find 'D:/Michael/Electroinova/Desarrollos app/InovInfoWeb/backend' -type f -name *.js)",
+      "Bash(powershell -Command \"Get-ChildItem -Path 'D:\\\\Michael\\\\Electroinova\\\\Desarrollos app\\\\InovInfoWeb\\\\backend' -Recurse -Filter '*catalogo*' | Select-Object FullName\")",
+      "Bash(powershell -Command \"New-Item -ItemType Directory -Force -Path 'D:\\\\Michael\\\\Electroinova\\\\Desarrollos app\\\\InovInfoWeb\\\\backend\\\\src\\\\informes\\\\veolia\\\\assets' | Out-Null; Copy-Item 'D:\\\\Michael\\\\Electroinova\\\\Desarrollos app\\\\InovInfoWeb\\\\Generador de Informe\\\\informe-veolia\\\\assets\\\\*' 'D:\\\\Michael\\\\Electroinova\\\\Desarrollos app\\\\InovInfoWeb\\\\backend\\\\src\\\\informes\\\\veolia\\\\assets\\\\' -Force; Get-ChildItem 'D:\\\\Michael\\\\Electroinova\\\\Desarrollos app\\\\InovInfoWeb\\\\backend\\\\src\\\\informes\\\\veolia\\\\assets\\\\'\")",
+      "Bash(find 'D:/Michael/Electroinova/Desarrollos app' -type f -name *.json)",
+      "Bash(find 'D:/Michael/Electroinova/Desarrollos app' -type f \\\\\\(-name .env -o -name *.pem -o -name *.key -o -name *credential* \\\\\\))",
+      "Bash(cd /d/Michael/Electroinova/\"Desarrollos app\"/InovInfoWeb)",
+      "Bash(cd:*)",
+      "Bash(rm -rf backend/routes backend/lib backend/patches)",
+      "Bash(rm -f backend/INSTRUCCIONES_INTEGRACION.md)",
+      "Bash(find 'D:/Michael/Electroinova/Desarrollos app/InovInfoWeb' -type f -name *.ts -o -name *.js)"
     ]
   }
 }
