@@ -147,6 +147,7 @@ function UnidadesPanel({ canEdit }: { canEdit: boolean }) {
   const [loading, setLoading] = useState(true)
   const [numero, setNumero] = useState('')
   const [sedeId, setSedeId] = useState<string>('')
+  const [busqueda, setBusqueda] = useState('')
 
   useEffect(() => {
     Promise.all([
@@ -154,6 +155,15 @@ function UnidadesPanel({ canEdit }: { canEdit: boolean }) {
       api.get<Sede[]>('/catalogos/sedes'),
     ]).then(([u, s]) => { setItems(u); setSedes(s) }).finally(() => setLoading(false))
   }, [])
+
+  const filtradas = busqueda.trim()
+    ? items.filter((u) => {
+        const q = busqueda.toLowerCase()
+        return u.numero.toLowerCase().includes(q)
+          || (u.placa && u.placa.toLowerCase().includes(q))
+          || (u.sede_nombre && u.sede_nombre.toLowerCase().includes(q))
+      })
+    : items
 
   async function crear() {
     if (!numero.trim()) return
@@ -185,9 +195,17 @@ function UnidadesPanel({ canEdit }: { canEdit: boolean }) {
           <button className="btn btn-primary" onClick={crear}>Agregar</button>
         </div>
       )}
-      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: 8 }}>{items.length} unidades</p>
+      <input
+        placeholder="Buscar por número, placa o sede..."
+        value={busqueda}
+        onChange={(e) => setBusqueda(e.target.value)}
+        style={{ width: '100%', marginBottom: 8 }}
+      />
+      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: 8 }}>
+        {busqueda ? `${filtradas.length} de ${items.length}` : `${items.length}`} unidades
+      </p>
       <div className="admin-list">
-        {items.slice(0, 50).map((u) => (
+        {filtradas.map((u) => (
           <div key={u.id} className="card admin-list-item">
             <div>
               <span className="item-name" style={{ opacity: u.activa ? 1 : 0.5 }}>{u.numero}</span>
@@ -201,7 +219,6 @@ function UnidadesPanel({ canEdit }: { canEdit: boolean }) {
             )}
           </div>
         ))}
-        {items.length > 50 && <p className="empty-state">Mostrando 50 de {items.length}</p>}
       </div>
     </div>
   )
