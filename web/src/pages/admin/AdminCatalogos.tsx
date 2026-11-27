@@ -148,6 +148,7 @@ function UnidadesPanel({ canEdit }: { canEdit: boolean }) {
   const [numero, setNumero] = useState('')
   const [sedeId, setSedeId] = useState<string>('')
   const [busqueda, setBusqueda] = useState('')
+  const [filtroSede, setFiltroSede] = useState<string>('')
 
   useEffect(() => {
     Promise.all([
@@ -156,14 +157,16 @@ function UnidadesPanel({ canEdit }: { canEdit: boolean }) {
     ]).then(([u, s]) => { setItems(u); setSedes(s) }).finally(() => setLoading(false))
   }, [])
 
-  const filtradas = busqueda.trim()
-    ? items.filter((u) => {
-        const q = busqueda.toLowerCase()
-        return u.numero.toLowerCase().includes(q)
-          || (u.placa && u.placa.toLowerCase().includes(q))
-          || (u.sede_nombre && u.sede_nombre.toLowerCase().includes(q))
-      })
-    : items
+  const filtradas = items.filter((u) => {
+    if (filtroSede && String(u.sede_id) !== filtroSede) return false
+    if (busqueda.trim()) {
+      const q = busqueda.toLowerCase()
+      return u.numero.toLowerCase().includes(q)
+        || (u.placa && u.placa.toLowerCase().includes(q))
+        || (u.sede_nombre && u.sede_nombre.toLowerCase().includes(q))
+    }
+    return true
+  })
 
   async function crear() {
     if (!numero.trim()) return
@@ -195,12 +198,18 @@ function UnidadesPanel({ canEdit }: { canEdit: boolean }) {
           <button className="btn btn-primary" onClick={crear}>Agregar</button>
         </div>
       )}
-      <input
-        placeholder="Buscar por número, placa o sede..."
-        value={busqueda}
-        onChange={(e) => setBusqueda(e.target.value)}
-        style={{ width: '100%', marginBottom: 8 }}
-      />
+      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+        <input
+          placeholder="Buscar por número o placa..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          style={{ flex: 1 }}
+        />
+        <select value={filtroSede} onChange={(e) => setFiltroSede(e.target.value)} style={{ minWidth: 120 }}>
+          <option value="">Todas las sedes</option>
+          {sedes.filter((s) => s.activa).map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+        </select>
+      </div>
       <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: 8 }}>
         {busqueda ? `${filtradas.length} de ${items.length}` : `${items.length}`} unidades
       </p>
